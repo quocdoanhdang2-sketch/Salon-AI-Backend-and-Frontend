@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hana Hair Salon - Hệ Thống Salon Tóc Tích Hợp AI | AI Try-On & Đặt Lịch 24/7</title>
+    <!-- Google Fonts (Playfair Display & Plus Jakarta Sans with Full Vietnamese Support) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- MediaPipe Vision for Face Landmarker 478 Points -->
+    <script src="https://unpkg.com/@mediapipe/tasks-vision/vision_bundle.js" crossorigin="anonymous"></script>
+    <!-- Three.js 3D WebGL Engine for 3D AR Live Mirror -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js" crossorigin="anonymous"></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="site-header" id="siteHeader">
+        <div class="header-container">
+            <!-- Brand Logo -->
+            <a href="#" class="brand-logo">
+                <div class="logo-box">
+                    <span class="logo-title">HANA</span>
+                    <span class="logo-subtitle">HAIR SALON</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="main-nav" id="mainNav">
+                <ul class="nav-list">
+                    <li><a href="#about" class="nav-link active">VỀ HANA</a></li>
+                    <li><a href="#branches" class="nav-link">HỆ THỐNG SALON</a></li>
+                    <li><a href="#services" class="nav-link">DỊCH VỤ</a></li>
+                    <li><a href="#products" class="nav-link">SẢN PHẨM</a></li>
+                    <li><a href="#rewards" class="nav-link highlight-gold"><i class="fa-solid fa-gift"></i> TÍCH
+                            ĐIỂM</a></li>
+                    <li><a href="#management" class="nav-link highlight-link"><i class="fa-solid fa-list-check"></i>
+                            QUẢN LÝ LỊCH</a></li>
+                    <li><a href="#ai-tryon" class="nav-link highlight-gold" id="navAiTryOn"><i
+                                class="fa-solid fa-vr-cardboard"></i> GƯƠNG 3D AI</a></li>
+                </ul>
+            </nav>
+
+            <!-- Header Actions (Cart, User Auth & Booking Button) -->
+            <div class="header-actions">
+                <!-- User Auth Area -->
+                <div class="auth-header-container" id="authHeaderContainer">
+                    <!-- Rendered by JS: Guest Login Button OR User/Stylist/Admin Profile Dropdown -->
+                </div>
+
+                <button class="cart-btn" id="cartToggleBtn" title="Giỏ hàng">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </button>
+
+                <button class="btn-booking" id="openBookingModalBtn" data-booking-ui>
+                    ĐẶT LỊCH <i class="fa-regular fa-calendar-days"></i>
+                </button>
+
+                <button class="mobile-toggle" id="mobileToggleBtn" aria-label="Toggle menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Slider / Banner Section -->
+    <section class="hero-slider-section">
+        <div class="slider-container" id="heroSlider">
+            <!-- Slide 1 -->
+            <div class="slide active">
+                <img src="assets/images/hero_1.png" alt="Hana Hair Salon Reception" class="slide-bg">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <h1 class="hero-brand-title">HANA<br>HAIR SALON</h1>
+                    <p class="hero-tagline">KIẾN TẠO PHONG CÁCH - NÂNG TẦM VẺ ĐẸP MÁI TÓC</p>
+                    <div class="hero-cta-group">
+                        <button class="btn-gold-large open-booking-trigger">
+                            <i class="fa-solid fa-scissors"></i> ĐẶT LỊCH NGAY TRẢI NGHIỆM
+                        </button>
+                        <a href="#rewards" class="btn-outline-light"><i class="fa-solid fa-star text-gold"></i> ĐĂNG KÝ
+                            TÍCH ĐIỂM VIP</a>
+                    </div>
+                    <div class="hero-ai-cta-row">
+                        <a href="#ai-tryon" class="btn-ai-hero-cta">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>DÙNG AI THỬ KIỂU TÓC ẢO (FREE)</span>
+                            <span class="ai-cta-badge">NEW</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="slide">
+                <img src="assets/images/hero_2.png" alt="Hana Hair Salon Styling Workspace" class="slide-bg">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <h1 class="hero-brand-title">ĐẲNG CẤP<br>HAIR STYLING</h1>
+                    <p class="hero-tagline">ĐỘI NGŨ MASTER STYLIST TẠO KIỂU HÀNG ĐẦU VIỆT NAM</p>
+                    <div class="hero-cta-group">
+                        <button class="btn-gold-large open-booking-trigger">
+                            <i class="fa-solid fa-calendar-check"></i> ĐẶT LỊCH NGAY
+                        </button>
+                        <a href="#branches" class="btn-outline-light">TÌM SALON GẦN BẠN</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slider Controls -->
+            <button class="slider-arrow prev-arrow" id="sliderPrev" aria-label="Previous slide">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="slider-arrow next-arrow" id="sliderNext" aria-label="Next slide">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <!-- Slider Indicators -->
+            <div class="slider-dots" id="sliderDots">
+                <span class="dot active" data-index="0"></span>
+                <span class="dot" data-index="1"></span>
+            </div>
+
+            <!-- Hotline Display Bottom-Right -->
+            <div class="hero-hotline">
+                <i class="fa-solid fa-phone-volume"></i>
+                <div class="hotline-info">
+                    <span class="hotline-label">HOTLINE TƯ VẤN 24/7</span>
+                    <span class="hotline-number">1900 63 68 83</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Contact Bar Right Side -->
+        <div class="floating-contact-bar">
+            <a href="https://zalo.me" target="_blank" rel="noopener noreferrer" class="contact-icon zalo-icon"
+                title="Chat Zalo">
+                <div class="icon-circle">Zalo</div>
+            </a>
+            <a href="https://m.me" target="_blank" rel="noopener noreferrer" class="contact-icon messenger-icon"
+                title="Messenger">
+                <i class="fa-brands fa-facebook-messenger"></i>
+            </a>
+            <a href="tel:1900636883" class="contact-icon phone-icon" title="Gọi Hotline">
+                <i class="fa-solid fa-phone"></i>
+            </a>
+            <button class="contact-icon quick-book-icon open-booking-trigger" title="Đặt lịch nhanh">
+                <i class="fa-solid fa-calendar-plus"></i>
+            </button>
+            <a href="#ai-tryon" class="contact-icon ai-tryon-float-icon" title="AI Thử Tóc Ảo">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span class="ai-float-pulse"></span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Section: Quick Booking Bar -->
+    <section class="quick-booking-bar-section" data-booking-ui>
+        <div class="container">
+            <div class="quick-booking-card">
+                <div class="qb-header">
+                    <h3><i class="fa-solid fa-bolt text-gold"></i> ĐẶT LỊCH HẸN NHANH TRONG 30 GIÂY</h3>
+                    <p>Chọn dịch vụ và thời gian mong muốn để Hana Hair phục vụ bạn chu đáo nhất</p>
+                </div>
+                <form class="qb-form" id="quickBookingForm">
+                    <div class="qb-field">
+                        <label><i class="fa-solid fa-location-dot"></i> Chi nhánh</label>
+                        <select id="qbBranch" title="Chi nhánh nhanh" aria-label="Chi nhánh nhanh" required>
+                            <option value="Hà Nội - 123 Cầu Giấy">Hà Nội - 123 Cầu Giấy</option>
+                            <option value="Hà Nội - 456 Trần Duy Hưng">Hà Nội - 456 Trần Duy Hưng</option>
+                            <option value="TP.HCM - 88 Nguyễn Trãi, Q.1">TP.HCM - 88 Nguyễn Trãi, Q.1</option>
+                            <option value="Đà Nẵng - 54 Nguyễn Văn Linh">Đà Nẵng - 54 Nguyễn Văn Linh</option>
+                        </select>
+                    </div>
+
+                    <div class="qb-field">
+                        <label><i class="fa-solid fa-scissors"></i> Dịch vụ</label>
+                        <select id="qbService" title="Dịch vụ nhanh" aria-label="Dịch vụ nhanh" required>
+                            <option value="Combo Cắt & Stylist Thiết Kế Form Tóc">Combo Cắt & Stylist Tạo Kiểu
+                                (250.000đ)</option>
+                            <option value="Nhuộm Thời Trang & Balayage Hàn Quốc">Nhuộm Balayage Hàn Quốc (950.000đ)
+                            </option>
+                            <option value="Nhuộm Highlight / Ombre Sáng Tôn Da">Nhuộm Highlight / Ombre (850.000đ)
+                            </option>
+                            <option value="Uốn Tóc Sóng Xoăn Hippie / Sóng Nước">Uốn Sóng Hippie / Nước (850.000đ)
+                            </option>
+                            <option value="Duỗi / Ép Tóc Thẳng Mượt Tự Nhiên">Duỗi / Ép Tóc Thẳng (750.000đ)</option>
+                            <option value="Phục Hồi Tóc Hư Tổn Chuyên Sâu Olaplex">Phục Hồi Tóc Olaplex (600.000đ)
+                            </option>
+                            <option value="Gội Đầu Dưỡng Sinh Thảo Mộc & Massage Cổ Vai Gáy">Gội Dưỡng Sinh Thảo Mộc
+                                (150.000đ)</option>
+                            <option value="Combo V.I.P Trọn Gói (Cắt + Nhuộm Balayage + Olaplex)">Combo VIP Trọn Gói
+                                (1.450.000đ)</option>
+                        </select>
+                    </div>
+
+                    <div class="qb-field">
+                        <label><i class="fa-solid fa-calendar"></i> Ngày hẹn</label>
+                        <input type="date" id="qbDate" aria-label="Ngày hẹn nhanh" required>
+                    </div>
+
+                    <div class="qb-field">
+                        <label><i class="fa-solid fa-clock"></i> Khung giờ</label>
+                        <select id="qbTime" aria-label="Khung giờ nhanh" required>
+                            <option value="08:30">08:30 AM</option>
+                            <option value="10:30">10:30 AM</option>
+                            <option value="14:00">02:00 PM</option>
+                            <option value="16:00">04:00 PM</option>
+                            <option value="18:30">06:30 PM</option>
+                        </select>
+                    </div>
+                    <div class="qb-submit">
+                        <button type="submit" class="btn-gold-fill">
+                            <i class="fa-solid fa-calendar-check"></i> TIẾP TỤC ĐẶT LỊCH
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         SECTION MỚI: AI 3D REAL-TIME AR MIRROR & FACE MESH SCANNING (#ai-tryon)
+<section class="ai-tryon-section section-padding" id="ai-tryon">
+        <div class="container">
+            <!-- Section Header -->
+            <div class="text-center mb-4">
+                <span class="sub-heading ai-sub-heading"><i class="fa-solid fa-vr-cardboard"></i> CÔNG NGHỆ 3D AR WEBGL & MEDIAPIPE MESH</span>
+                <h2 class="section-title light-text"><i class="fa-solid fa-wand-magic-sparkles text-gold"></i> GƯƠNG SOI 3D AR REAL-TIME</h2>
+                <p class="text-muted" style="max-width: 700px; margin: 0 auto; font-size: 0.95rem;">Quét khuôn mặt 3D thực tế qua Camera & soi kiểu tóc 360° theo từng góc nghiêng đầu của bạn</p>
+            </div>
+
+            <!-- Mode Switcher Bar -->
+            <div class="ai-mode-switcher-bar mb-4">
+                <button class="ai-mode-tab active" id="tabMode3dMirror">
+                    <i class="fa-solid fa-vr-cardboard"></i> 🪞 Gương Soi 3D AR Real-Time (Quét Mặt & Thử Tóc 3D)
+                </button>
+                <button class="ai-mode-tab" id="tabModePhotoAi">
+                    <i class="fa-solid fa-camera"></i> 📸 Chụp / Tải Ảnh & AI Studio 4K
+                </button>
+            </div>
+
+            <!-- === CHẾ ĐỘ 1: GƯƠNG SOI 3D AR REAL-TIME === -->
+            <div class="ai-3d-mirror-container" id="ai3dMirrorContainer" style="background: rgba(15, 17, 21, 0.95); border: 1px solid rgba(223, 161, 50, 0.35); border-radius: 24px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+                <div class="mirror-main-layout" style="display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 28px; align-items: start;">
+                    <div class="mirror-viewport-box" style="position: relative; width: 100%; aspect-ratio: 4/3; min-height: 540px; background: #05070a; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 12px 35px rgba(0,0,0,0.7);">
+                        <video id="ar3dVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+                        <canvas id="ar3dMeshCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                        <div id="ar3dThreeContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3;"></div>
+                        
+                        <div class="ar-3d-badge" style="position: absolute; top: 18px; left: 18px; background: rgba(0,0,0,0.85); color: #dfa132; padding: 8px 16px; border-radius: 25px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(223,161,50,0.4); z-index: 4; backdrop-filter: blur(8px);">
+                            <span style="display: inline-block; width: 10px; height: 10px; background: #22c55e; border-radius: 50%; margin-right: 8px; animation: pulse 1.5s infinite;"></span> <span id="arTrackingStatus">MediaPipe 478 Landmark 3D Tracking Live</span>
+                        </div>
+
+                        <!-- Fine-Tuning 3D Sliders Quick Overlay Top-Right -->
+                        <div class="ar-tuning-quick" style="position: absolute; top: 18px; right: 18px; background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 10px 14px; z-index: 4; backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 6px;">
+                            <div style="font-size: 0.75rem; color: #dfa132; font-weight: 700;"><i class="fa-solid fa-sliders"></i> Tinh chỉnh 3D:</div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #fff;">
+                                <span>Cao:</span>
+                                <input type="range" id="arTuneOffsetY" min="-2.0" max="2.0" step="0.1" value="0" style="width: 70px; height: 4px; accent-color: #dfa132;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #fff;">
+                                <span>Size:</span>
+                                <input type="range" id="arTuneScale" min="0.7" max="1.6" step="0.05" value="1.0" style="width: 70px; height: 4px; accent-color: #dfa132;">
+                            </div>
+                        </div>
+
+                        <div class="ar-3d-controls-overlay" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; z-index: 4; width: 90%; justify-content: center;">
+                            <button class="btn btn-gold btn-sm" id="btnStart3dCamera" style="padding: 12px 24px; border-radius: 30px; font-weight: 700; background: linear-gradient(135deg, #dfa132, #c5861b); color: #000; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(223,161,50,0.5);">
+                                <i class="fa-solid fa-video"></i> BẬT CAMERA 3D QUÉT MẶT
+                            </button>
+                            <button class="btn btn-outline-gold btn-sm" id="btnArSnap" style="padding: 12px 20px; border-radius: 30px; font-weight: 600; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #dfa132; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> CHỤP ẢNH GƯƠNG 3D
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mirror-sidebar" style="background: rgba(255,255,255,0.025); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);">
+                        <!-- BẢNG CHẨN ĐOÁN KHUÔN MẶT & ƯU NHƯỢC ĐIỂM -->
+                        <div class="ar-face-metrics-box" style="background: rgba(223,161,50,0.08); padding: 16px 18px; border-radius: 16px; border: 1px solid rgba(223,161,50,0.25); margin-bottom: 20px;">
+                            <div style="font-size: 0.8rem; text-transform: uppercase; color: #dfa132; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;">
+                                <i class="fa-solid fa-brain"></i> Nhận Diện 478 Landmark & Tư Vấn
+                            </div>
+                            <div style="font-size: 1.2rem; color: #fff; font-weight: 700;" id="arFaceShapeVal">Khuôn mặt: Oval (Trái Xoan)</div>
+                            <div style="font-size: 0.85rem; color: #f0c56c; margin-top: 4px;" id="arSkinToneVal">Tone da: Vàng Sáng (Warm Beige)</div>
+                            
+                            <div class="ar-face-consultation" id="arFaceConsultation" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(223,161,50,0.2);">
+                                <p id="arFaceSummary" style="color: rgba(255,255,255,0.85); font-size: 0.85rem; line-height: 1.55; margin-bottom: 12px;">
+                                    Tỷ lệ khuôn mặt trái xoan cân đối theo chuẩn tỷ lệ vàng. Rất dễ phối các kiểu tóc từ dài bồng bềnh đến bob ngắn cá tính.
+                                </p>
+                                
+                                <div class="ar-consultation-grid" style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px;">
+                                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); padding: 10px 14px; border-radius: 10px;">
+                                        <strong style="color: #4ade80; display: block; font-size: 0.8rem; margin-bottom: 4px;"><i class="fa-solid fa-circle-check"></i> Ưu Điểm Tự Nhiên:</strong>
+                                        <ul id="arFaceStrengths" style="color: rgba(255,255,255,0.85); font-size: 0.78rem; line-height: 1.45; margin: 0; padding-left: 18px;">
+                                            <li>Tỷ lệ chiều dài và chiều rộng cân đối chuẩn tỷ lệ vàng.</li>
+                                            <li>Đường xương cằm thon gọn, sống mũi và trán thanh tú.</li>
+                                        </ul>
+                                    </div>
+                                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); padding: 10px 14px; border-radius: 10px;">
+                                        <strong style="color: #f87171; display: block; font-size: 0.8rem; margin-bottom: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> Nhược Điểm & Vùng Cần Cân Bằng:</strong>
+                                        <ul id="arFaceCautions" style="color: rgba(255,255,255,0.85); font-size: 0.78rem; line-height: 1.45; margin: 0; padding-left: 18px;">
+                                            <li>Hạn chế kiểu tóc mái bằng quá dày che khuất hoàn toàn trán.</li>
+                                            <li>Tránh tóc thẳng xẹp ép sát vào hai bên da đầu.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.3); padding: 10px 14px; border-radius: 10px;">
+                                    <strong style="color: #c084fc; font-size: 0.8rem;"><i class="fa-solid fa-scissors"></i> Đề Xuất Kiểu Tóc & Màu Nhuộm:</strong>
+                                    <p class="ar-style-advice" id="arStyleAdvice" style="color: #e9d5ff; font-size: 0.8rem; margin-top: 4px; margin-bottom: 0;">
+                                        Layer Dài Cúp Ngọn, Sóng Lơi Hàn Quốc hoặc Bob Balayage. Màu nhuộm tôn da nhất: Caramel, Nâu Hạt Dẻ hoặc Balayage Khói.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 style="font-size: 0.95rem; color: #dfa132; margin-bottom: 12px; font-weight: 700;"><i class="fa-solid fa-scissors"></i> CHỌN KIỂU TÓC 3D REAL-TIME</h4>
+                        <div class="ar-hair-preset-list" id="arHairPresetList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn active" data-hair3d="sidepart_nam_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🤵 Side Part 7/3 Nam</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="layer_nu_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">💇 Layer Nữ 3D</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="wave_nu_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🌀 Sóng Lơi 3D</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="bob_nu_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">✂️ Bob Balayage 3D</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="wolf_cut_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🐺 Wolf Cut 3D</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="layer_nam_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">💈 Layer Nam Crop</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="undercut_nam_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">⚡ Undercut Pompadour</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="pixie_nu_3d" style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🎀 Pixie Cut Nữ</button>
+                        </div>
+
+                        <h4 style="font-size: 0.95rem; color: #dfa132; margin-bottom: 12px; font-weight: 700;"><i class="fa-solid fa-palette"></i> MÀU NHUỘM 3D MATERIALS</h4>
+                        <div class="ar-color-chips" id="arColorPalette" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px;">
+                            <button class="ar-color-chip active" data-color3d="#36241b" style="height: 38px; border-radius: 10px; background: #36241b; border: 2px solid #dfa132; cursor: pointer;" title="Nâu Socola"></button>
+                            <button class="ar-color-chip" data-color3d="#d79137" style="height: 38px; border-radius: 10px; background: #d79137; border: 2px solid transparent; cursor: pointer;" title="Vàng Caramel"></button>
+                            <button class="ar-color-chip" data-color3d="#e4aa4b" style="height: 38px; border-radius: 10px; background: #e4aa4b; border: 2px solid transparent; cursor: pointer;" title="Nâu Mật Ong"></button>
+                            <button class="ar-color-chip" data-color3d="#5a7841" style="height: 38px; border-radius: 10px; background: #5a7841; border: 2px solid transparent; cursor: pointer;" title="Nâu Rêu"></button>
+                            <button class="ar-color-chip" data-color3d="#ebf0fa" style="height: 38px; border-radius: 10px; background: #ebf0fa; border: 2px solid transparent; cursor: pointer;" title="Bạch Kim"></button>
+                            <button class="ar-color-chip" data-color3d="#e17396" style="height: 38px; border-radius: 10px; background: #e17396; border: 2px solid transparent; cursor: pointer;" title="Hồng Pastel"></button>
+                            <button class="ar-color-chip" data-color3d="#8796a5" style="height: 38px; border-radius: 10px; background: #8796a5; border: 2px solid transparent; cursor: pointer;" title="Xám Khói"></button>
+                            <button class="ar-color-chip" data-color3d="#110a07" style="height: 38px; border-radius: 10px; background: #110a07; border: 2px solid transparent; cursor: pointer;" title="Đen Tự Nhiên"></button>
+                        </div>
+
+                        <button class="btn btn-gold w-100" id="btnBook3dStyle" style="padding: 14px; border-radius: 14px; font-weight: 700; font-size: 1rem; width: 100%; background: linear-gradient(135deg, #dfa132, #c5861b); color: #000; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(223,161,50,0.4);">
+                            <i class="fa-solid fa-calendar-check"></i> 📅 ĐẶT LỊCH VỚI KIỂU TÓC NÀY
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- === CHẾ ĐỘ 2: AI STUDIO 2D & 4K UPLOAD ẢNH === -->
+            <div class="ai-studio-panel hidden" id="aiStudioPanel">
+                <!-- 3-Step Stepper UI -->
+                <div class="ai-stepper-bar">
+                    <div class="ai-step active" id="aiStep1Indicator">
+                        <div class="ai-step-num">1</div>
+                        <div class="ai-step-label">Upload / Chụp ảnh</div>
+                    </div>
+                    <div class="ai-step-connector"></div>
+                    <div class="ai-step" id="aiStep2Indicator">
+                        <div class="ai-step-num">2</div>
+                        <div class="ai-step-label">Phân Tích AI</div>
+                    </div>
+                    <div class="ai-step-connector"></div>
+                    <div class="ai-step" id="aiStep3Indicator">
+                        <div class="ai-step-num">3</div>
+                        <div class="ai-step-label">Thử Tóc & Tinh Chỉnh</div>
+                    </div>
+                </div>
+
+                <!-- === BƯỚC 1: UPLOAD ẢNH === -->
+                <div class="ai-studio-step active" id="aiStudioStep1">
+                    <div class="ai-upload-area" id="aiUploadArea">
+                        <div class="ai-upload-icon">
+                            <i class="fa-solid fa-camera-retro"></i>
+                        </div>
+                        <h3>Tải lên hoặc chụp ảnh khuôn mặt của bạn</h3>
+                        <p>Hỗ trợ JPG, PNG, WEBP — tốt nhất khi chụp thẳng mặt, ánh sáng đều</p>
+                        <div class="ai-upload-btn-group">
+                            <label for="aiFileInput" class="btn-ai-upload" id="btnUploadFile">
+                                <i class="fa-solid fa-upload"></i> Chọn từ thư viện
+                            </label>
+                            <input type="file" id="aiFileInput" accept="image/*" class="hidden" aria-label="Chọn ảnh khuôn mặt">
+                            <button class="btn-ai-camera" id="btnOpenCamera">
+                                <i class="fa-solid fa-camera"></i> Chụp ảnh trực tiếp
+                            </button>
+                        </div>
+                        <div class="ai-upload-requirements">
+                            <span><i class="fa-solid fa-check text-gold"></i> Ảnh chân dung rõ mặt</span>
+                            <span><i class="fa-solid fa-check text-gold"></i> Độ phân giải tối thiểu 400×400px</span>
+                            <span><i class="fa-solid fa-check text-gold"></i> Không cần trang điểm</span>
+                        </div>
+
+                        <!-- Cụm chọn nhanh người mẫu thử nghiệm Demo -->
+                        <div class="ai-preset-models-box">
+                            <div class="ai-preset-title">
+                                <i class="fa-solid fa-wand-magic-sparkles text-gold"></i> Hoặc thử nhanh với người mẫu AI:
+                            </div>
+                            <div class="ai-preset-grid" id="aiPresetFaceGrid">
+                                <div class="ai-preset-card" data-preset="model_female_oval">
+                                    <img src="assets/images/service_cut.png" alt="Model Nữ Oval" class="ai-preset-avatar">
+                                    <span>Nữ (Mặt Oval)</span>
+                                </div>
+                                <div class="ai-preset-card" data-preset="model_female_round">
+                                    <img src="assets/images/service_perm.png" alt="Model Nữ Tròn" class="ai-preset-avatar">
+                                    <span>Nữ (Mặt Tròn)</span>
+                                </div>
+                                <div class="ai-preset-card" data-preset="model_male_square">
+                                    <img src="assets/images/hero_2.png" alt="Model Nam Vuông" class="ai-preset-avatar">
+                                    <span>Nam (Mặt Vuông)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === BƯỚC 2: KẾT QUẢ PHÂN TÍCH AI === -->
+                <div class="ai-studio-step" id="aiStudioStep2">
+                    <div class="ai-analysis-layout">
+                        <!-- Preview ảnh đã upload -->
+                        <div class="ai-preview-col">
+                            <div class="ai-face-preview" id="aiFacePreview">
+                                <img id="aiPreviewImg" src="" alt="Ảnh khuôn mặt của bạn">
+                                <div class="ai-scanning-overlay" id="aiScanOverlay">
+                                    <div class="ai-scan-line"></div>
+                                    <div class="ai-scan-label"><i class="fa-solid fa-microchip"></i> MediaPipe 478 Landmark AI đang quét...</div>
+                                </div>
+                            </div>
+                            <button class="btn-reupload" id="btnReupload">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Tải ảnh khác
+                            </button>
+                        </div>
+
+                        <!-- Kết quả phân tích AI -->
+                        <div class="ai-result-col" id="aiResultPanel">
+                            <div class="ai-result-header">
+                                <i class="fa-solid fa-brain"></i>
+                                <h3>Kết Quả Phân Tích MediaPipe 478 Điểm</h3>
+                                <span class="ai-accuracy-tag">Độ chính xác 97%</span>
+                            </div>
+
+                            <div class="ai-metrics-grid">
+                                <div class="ai-metric-card">
+                                    <div class="ai-metric-icon face-metric">
+                                        <i class="fa-solid fa-face-smile"></i>
+                                    </div>
+                                    <div class="ai-metric-info">
+                                        <span class="ai-metric-label">Dáng khuôn mặt</span>
+                                        <strong class="ai-metric-value" id="aiResultFaceShape">Oval</strong>
+                                    </div>
+                                </div>
+                                <div class="ai-metric-card">
+                                    <div class="ai-metric-icon skin-metric">
+                                        <i class="fa-solid fa-palette"></i>
+                                    </div>
+                                    <div class="ai-metric-info">
+                                        <span class="ai-metric-label">Tone da phân tích</span>
+                                        <strong class="ai-metric-value" id="aiResultSkinTone">Warm Beige</strong>
+                                    </div>
+                                </div>
+                                <div class="ai-metric-card">
+                                    <div class="ai-metric-icon hair-metric">
+                                        <i class="fa-solid fa-spa"></i>
+                                    </div>
+                                    <div class="ai-metric-info">
+                                        <span class="ai-metric-label">Tình trạng tóc</span>
+                                        <strong class="ai-metric-value" id="aiResultHairStatus">Khỏe, ít xơ</strong>
+                                    </div>
+                                </div>
+                                <div class="ai-metric-card">
+                                    <div class="ai-metric-icon color-metric">
+                                        <i class="fa-solid fa-wand-sparkles"></i>
+                                    </div>
+                                    <div class="ai-metric-info">
+                                        <span class="ai-metric-label">Gợi ý màu tốt nhất</span>
+                                        <strong class="ai-metric-value" id="aiResultColorSuggest">Caramel / Nâu Hạt Dẻ</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-recommend-box">
+                                <i class="fa-solid fa-lightbulb text-gold"></i>
+                                <div>
+                                    <strong>AI khuyến nghị cá nhân hóa:</strong>
+                                    <p id="aiRecommendText">Khuôn mặt cân đối rất phù hợp với kiểu tóc Layer Hàn Quốc, Sóng lơi bồng bềnh hoặc Bob Balayage. Hãy ghép thử các mẫu tóc ở bước tiếp theo!</p>
+                                </div>
+                            </div>
+
+                            <button class="btn-ai-next" id="btnGoToStep3AI">
+                                <i class="fa-solid fa-arrow-right"></i> Xem bộ sưu tập & Ghép thử mẫu tóc
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === BƯỚC 3: BỘ SƯU TẬP MẪU TÓC AI & TINH CHỈNH === -->
+                <div class="ai-studio-step" id="aiStudioStep3">
+                    <div class="ai-hairstyle-studio">
+                        <!-- Cột ghép ảnh CV Engine -->
+                        <div class="ai-tryon-preview-col">
+                            <!-- Thanh công cụ so sánh Before / After -->
+                            <div class="ai-compare-toolbar">
+                                <div class="ai-compare-label">
+                                    <i class="fa-solid fa-sliders text-gold"></i> Chế độ xem:
+                                </div>
+                                <div class="ai-compare-btn-group" id="aiCompareBtnGroup">
+                                    <button class="btn-compare-mode active" data-mode="after">Sau (AI)</button>
+                                    <button class="btn-compare-mode" data-mode="before">Trước (Gốc)</button>
+                                    <button class="btn-compare-mode" data-mode="split">Chia Đôi (Split)</button>
+                                </div>
+                            </div>
+
+                            <div class="ai-tryon-canvas" id="aiTryOnCanvas">
+                                <canvas id="aiTryOnCanvasEngine" class="ai-tryon-canvas-engine"></canvas>
+                                <div class="tryon-ai-badge"><i class="fa-solid fa-microchip"></i> 478 Landmark CV Engine</div>
+                            </div>
+
+                            <!-- Bảng tinh chỉnh vị trí, kích thước, độ xoay & màu nhuộm -->
+                            <div class="ai-tuning-panel">
+                                <div class="tuning-header">
+                                    <h5><i class="fa-solid fa-sliders text-gold"></i> Tinh Chỉnh Khớp Tóc & Màu Nhuộm</h5>
+                                    <button class="btn-reset-tuning" id="btnResetTuning" title="Đặt lại vị trí"><i class="fa-solid fa-rotate-left"></i></button>
+                                </div>
+                                <div class="tuning-grid">
+                                    <div class="tuning-group">
+                                        <label><i class="fa-solid fa-up-down-left-right"></i> Dịch X / Y:</label>
+                                        <div class="tuning-inputs">
+                                            <label for="tuneOffsetX" class="sr-only">Dịch ngang</label>
+                                            <span>X:</span> <input type="range" id="tuneOffsetX" min="-120" max="120" value="0" aria-label="Dịch ngang">
+                                            <label for="tuneOffsetY" class="sr-only">Dịch dọc</label>
+                                            <span>Y:</span> <input type="range" id="tuneOffsetY" min="-180" max="120" value="-15" aria-label="Dịch dọc">
+                                        </div>
+                                    </div>
+                                    <div class="tuning-group">
+                                        <label for="tuneScale"><i class="fa-solid fa-maximize"></i> Size Tóc:</label>
+                                        <input type="range" id="tuneScale" min="0.7" max="1.8" step="0.02" value="1.15" aria-label="Size tóc">
+                                    </div>
+                                    <div class="tuning-group">
+                                        <label for="tuneRotate"><i class="fa-solid fa-rotate"></i> Góc Xoay:</label>
+                                        <input type="range" id="tuneRotate" min="-45" max="45" value="0" aria-label="Góc xoay tóc">
+                                    </div>
+                                    <div class="tuning-group">
+                                        <label for="tuneOpacity"><i class="fa-solid fa-droplet"></i> Trong Suốt:</label>
+                                        <input type="range" id="tuneOpacity" min="0.3" max="1" step="0.05" value="0.96" aria-label="Độ trong suốt">
+                                    </div>
+                                </div>
+                                <div class="hair-color-palette">
+                                    <label><i class="fa-solid fa-palette"></i> Màu nhuộm Salon:</label>
+                                    <div class="color-chips" id="hairColorPalette">
+                                        <button class="color-chip active" data-color="original" style="background: #36241b;" title="Nâu Tự Nhiên"></button>
+                                        <button class="color-chip" data-color="caramel" style="background: #d79137;" title="Vàng Caramel"></button>
+                                        <button class="color-chip" data-color="chocolate" style="background: #2b1810;" title="Nâu Socola"></button>
+                                        <button class="color-chip" data-color="honey" style="background: #e4aa4b;" title="Nâu Mật Ong"></button>
+                                        <button class="color-chip" data-color="moss" style="background: #5a7841;" title="Nâu Rêu"></button>
+                                        <button class="color-chip" data-color="platinum" style="background: #ebf0fa;" title="Bạch Kim"></button>
+                                        <button class="color-chip" data-color="rose" style="background: #e17396;" title="Hồng Pastel"></button>
+                                        <button class="color-chip" data-color="ash" style="background: #8796a5;" title="Xám Khói"></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nhóm nút hành động: Ghép tóc AI & Đặt lịch -->
+                            <div class="ai-tryon-action-row">
+                                <button class="btn-ai-swap-real" id="btnRealAiSwap">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> GHÉP TÓC AI CHÂN THỰC (4K)
+                                </button>
+                                <button class="btn-ai-book-now" id="btnBookThisStyle">
+                                    <i class="fa-solid fa-calendar-check"></i> ĐẶT LỊCH KIỂU TÓC NÀY
+                                </button>
+                            </div>
+
+                            <!-- Thẻ phân tích Ưu / Nhược điểm của kiểu tóc được chọn -->
+                            <div class="ai-hairstyle-analysis-card" id="aiHairstyleAnalysisCard">
+                                <div class="analysis-header">
+                                    <div class="analysis-title">
+                                        <i class="fa-solid fa-award text-gold"></i>
+                                        <strong id="analysisHairName">Layer Dài Cúp Ngọn Hàn Quốc</strong>
+                                    </div>
+                                    <span class="match-score-badge" id="analysisMatchVal">98% Phù Hợp</span>
+                                </div>
+                                <div class="pros-cons-grid">
+                                    <div class="pros-box">
+                                        <div class="pros-title"><i class="fa-solid fa-circle-plus"></i> Ưu Điểm Tôn Dáng Mặt:</div>
+                                        <ul class="pros-list" id="analysisProsList">
+                                            <li>Tạo độ bay bổng tự nhiên, giúp khuôn mặt thon gọn V-line.</li>
+                                            <li>Che khuyết điểm xương quai hàm to hoặc gò má cao.</li>
+                                        </ul>
+                                    </div>
+                                    <div class="cons-box">
+                                        <div class="cons-title"><i class="fa-solid fa-triangle-exclamation"></i> Nhược Điểm & Lưu Ý:</div>
+                                        <ul class="cons-list" id="analysisConsList">
+                                            <li>Cần sấy cúp đuôi nhẹ sau khi gội để duy trì nếp hoàn hảo.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="care-tip-box" id="analysisCareTipBox">
+                                    <i class="fa-solid fa-lightbulb text-gold"></i>
+                                    <span id="analysisCareTip">Mẹo chăm sóc: Sấy tóc từ trên xuống và dùng lược tròn cuộn nhẹ đuôi tóc.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bộ sưu tập mẫu tóc -->
+                        <div class="ai-hairstyle-gallery-col">
+                            <div class="ai-gallery-header">
+                                <h4><i class="fa-solid fa-scissors text-gold"></i> Bộ Sưu Tập Mẫu Tóc Salon Cao Cấp</h4>
+                                <span class="ai-gallery-count">Chọn kiểu tóc & bấm 'Ghép Tóc AI Chân Thực 3D'</span>
+                            </div>
+                            <div class="ai-gallery-filters">
+                                <button class="ai-filter-btn active" data-filter="all">Tất cả</button>
+                                <button class="ai-filter-btn" data-filter="nu">Nữ Trend</button>
+                                <button class="ai-filter-btn" data-filter="nam">Nam Lịch Lãm</button>
+                                <button class="ai-filter-btn" data-filter="uon">Sóng & Uốn</button>
+                                <button class="ai-filter-btn" data-filter="ngan">Bob & Ngắn</button>
+                            </div>
+                            <div class="ai-hairstyle-grid" id="aiHairstyleGrid">
+                                <div class="ai-hair-card active-hair" data-cat="nu" data-hair="layer_nu" data-name="Layer Dài Cúp Ngọn Hàn Quốc">
+                                    <img src="assets/images/service_cut.png" alt="Layer Dài Cúp Ngọn Hàn Quốc">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Layer Dài Cúp Ngọn</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-fire text-gold"></i> 98% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nu uon" data-hair="wave_nu" data-name="Sóng Lơi Bồng Bềnh Hàn Quốc">
+                                    <img src="assets/images/service_perm.png" alt="Sóng Lơi Bồng Bềnh">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Sóng Lơi Hàn Quốc</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-star text-gold"></i> 96% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nu ngan" data-hair="bob_nu" data-name="Bob Ngắn Cá Tính Balayage">
+                                    <img src="assets/images/service_color.png" alt="Bob Ngắn Cá Tính">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Bob Ngắn Balayage</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-star text-gold"></i> 94% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nu" data-hair="wolf_cut" data-name="Wolf Cut / Shag Thời Thượng">
+                                    <img src="assets/images/service_vip.png" alt="Wolf Cut Shag">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Wolf Cut Shag Trend</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-crown text-gold"></i> 95% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nu" data-hair="straight_silk" data-name="Thẳng Suôn Keratin Bóng Mượt">
+                                    <img src="assets/images/service_olaplex.png" alt="Thẳng Keratin">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Thẳng Suôn Keratin</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-star text-gold"></i> 92% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nu ngan" data-hair="pixie_nu" data-name="Pixie Cut Hiện Đại Nữ">
+                                    <img src="assets/images/service_spa.png" alt="Pixie Cut">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Pixie Cut Hiện Đại</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-fire text-gold"></i> 90% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nam" data-hair="layer_nam" data-name="Layer Nam Textured Crop">
+                                    <img src="assets/images/hero_1.png" alt="Layer Nam Textured Crop">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Layer Nam Crop Hàn Quốc</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-crown text-gold"></i> 97% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                                <div class="ai-hair-card" data-cat="nam" data-hair="sidepart_nam" data-name="Side Part 7/3 Lịch Lãm Nam">
+                                    <img src="assets/images/hero_2.png" alt="Side Part 7/3 Nam">
+                                    <div class="ai-hair-card-info">
+                                        <span class="ai-hair-name">Side Part 7/3 Lịch Lãm</span>
+                                        <span class="ai-hair-match"><i class="fa-solid fa-fire text-gold"></i> 96% phù hợp</span>
+                                    </div>
+                                    <div class="ai-hair-overlay"><i class="fa-solid fa-magic"></i> Thử ngay</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end ai-studio-panel -->
+        </div>
+    </section>
+
+    <!-- SECTION: HỆ THỐNG TÍCH ĐIỂM REWARDS & QUYỀN LỢI THÀNH VIÊN -->
+    <section class="section-padding bg-darker" id="rewards">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="sub-heading">HANA LOYALTY REWARDS</span>
+                <h2 class="section-title light-text"><i class="fa-solid fa-crown text-gold"></i> TÍCH ĐIỂM THÀNH VIÊN
+                    VIP</h2>
+                <p class="section-desc">Tích lũy 1.000đ = 1 điểm cho mỗi lần làm tóc. Nâng hạng thành viên nhận ưu đãi
+                    giảm giá lên tới 15% & đổi Voucher hấp dẫn!</p>
+            </div>
+
+            <!-- Tiers Overview Grid -->
+            <div class="grid-4-col tier-grid">
+                <!-- Tier 1 -->
+                <div class="tier-card tier-bronze">
+                    <div class="tier-icon"><i class="fa-solid fa-award"></i></div>
+                    <h3>Hạng Đồng</h3>
+                    <div class="tier-points-req">0 - 499 Điểm</div>
+                    <ul class="tier-benefits">
+                        <li><i class="fa-solid fa-check text-gold"></i> Tích điểm 1% trên tổng hóa đơn</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Đổi Voucher quà tặng độc quyền</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Đặt lịch hẹn ưu tiên online</li>
+                    </ul>
+                </div>
+
+                <!-- Tier 2 -->
+                <div class="tier-card tier-silver">
+                    <div class="tier-icon"><i class="fa-solid fa-medal"></i></div>
+                    <h3>Hạng Bạc</h3>
+                    <div class="tier-points-req">500 - 999 Điểm</div>
+                    <ul class="tier-benefits">
+                        <li><i class="fa-solid fa-check text-gold"></i> <strong>Giảm 5%</strong> tất cả dịch vụ làm tóc
+                        </li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Tặng 100 điểm thưởng sinh nhật</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Miễn phí nước uống sâm thảo mộc</li>
+                    </ul>
+                </div>
+
+                <!-- Tier 3 -->
+                <div class="tier-card tier-gold featured-tier">
+                    <div class="tier-badge-top">Phổ Biến Nhất</div>
+                    <div class="tier-icon"><i class="fa-solid fa-crown"></i></div>
+                    <h3>Hạng Vàng</h3>
+                    <div class="tier-points-req">1.000 - 2.499 Điểm</div>
+                    <ul class="tier-benefits">
+                        <li><i class="fa-solid fa-check text-gold"></i> <strong>Giảm 10%</strong> tất cả dịch vụ</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Tặng 01 lần Gội Đầu Dưỡng Sinh</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Ưu tiên chọn Master Stylist</li>
+                    </ul>
+                </div>
+
+                <!-- Tier 4 -->
+                <div class="tier-card tier-diamond">
+                    <div class="tier-icon"><i class="fa-solid fa-gem"></i></div>
+                    <h3>Hạng Kim Cương</h3>
+                    <div class="tier-points-req">2.500+ Điểm</div>
+                    <ul class="tier-benefits">
+                        <li><i class="fa-solid fa-check text-gold"></i> <strong>Giảm 15%</strong> tất cả hóa đơn</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Miễn phí sấy tạo kiểu trọn đời</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Phòng VIP Styling riêng biệt</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Rewards Catalog (Vouchers Can Be Redeemed) -->
+            <div class="rewards-catalog-box mt-5">
+                <div class="rewards-header-row">
+                    <h3><i class="fa-solid fa-ticket text-gold"></i> KHO VOUCHER ĐỔI ĐIỂM THƯỞNG</h3>
+                    <button class="btn-gold-fill" id="openUserProfileRewardsBtn">
+                        <i class="fa-solid fa-wallet"></i> VÍ ĐIỂM & VOUCHER CỦA TÔI
+                    </button>
+                </div>
+                <div class="grid-3-col mt-4">
+                    <div class="voucher-card">
+                        <div class="voucher-left">
+                            <span class="v-val">50K</span>
+                            <span class="v-unit">OFF</span>
+                        </div>
+                        <div class="voucher-right">
+                            <h4>Voucher Giảm 50.000đ</h4>
+                            <p>Áp dụng cho đơn dịch vụ từ 200.000đ</p>
+                            <div class="voucher-bottom">
+                                <span class="v-points"><i class="fa-solid fa-star text-gold"></i> 500 Điểm</span>
+                                <button class="btn-redeem-voucher" data-id="v50" data-name="Voucher Giảm 50K"
+                                    data-points="500" data-discount="50000">ĐỔI QUÀ</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="voucher-card">
+                        <div class="voucher-left gold-left">
+                            <span class="v-val">100K</span>
+                            <span class="v-unit">OFF</span>
+                        </div>
+                        <div class="voucher-right">
+                            <h4>Voucher Giảm 100.000đ</h4>
+                            <p>Áp dụng cho đơn dịch vụ Uốn/Nhuộm/Cắt</p>
+                            <div class="voucher-bottom">
+                                <span class="v-points"><i class="fa-solid fa-star text-gold"></i> 900 Điểm</span>
+                                <button class="btn-redeem-voucher" data-id="v100" data-name="Voucher Giảm 100K"
+                                    data-points="900" data-discount="100000">ĐỔI QUÀ</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="voucher-card">
+                        <div class="voucher-left teal-left">
+                            <span class="v-val">FREE</span>
+                            <span class="v-unit">SPA</span>
+                        </div>
+                        <div class="voucher-right">
+                            <h4>Miễn Phí Gội Dưỡng Sinh</h4>
+                            <p>Tặng 01 buổi Gội đầu dưỡng sinh thảo mộc</p>
+                            <div class="voucher-bottom">
+                                <span class="v-points"><i class="fa-solid fa-star text-gold"></i> 1.200 Điểm</span>
+                                <button class="btn-redeem-voucher" data-id="vfree" data-name="Free Gội Dưỡng Sinh"
+                                    data-points="1200" data-discount="150000">ĐỔI QUÀ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Về Hana Hair Salon -->
+    <section class="section-padding" id="about">
+        <div class="container">
+            <div class="grid-2-col align-center">
+                <div class="about-image-wrap">
+                    <img src="assets/images/hero_1.png" alt="Hana Hair Interior"
+                        class="img-responsive rounded-card shadow-lg">
+                    <div class="experience-badge">
+                        <span class="exp-num">10+</span>
+                        <span class="exp-text">Năm Kinh Nghiệm & Uy Tín</span>
+                    </div>
+                </div>
+                <div class="about-text-content">
+                    <span class="sub-heading">VỀ HANA HAIR SALON</span>
+                    <h2 class="section-title">NƠI KHỞI NGUỒN CỦA MÁI TÓC HOÀN HẢO</h2>
+                    <p class="paragraph">
+                        Hana Hair Salon tự hào là thương hiệu tạo mẫu tóc hàng đầu Việt Nam, đi đầu trong việc cập nhật
+                        các xu hướng tóc thời thượng chuẩn Hàn Quốc, Châu Âu. Chúng tôi mang đến không gian salon sang
+                        trọng, đẳng cấp cùng quy trình dịch vụ chuyên nghiệp.
+                    </p>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feat-icon"><i class="fa-solid fa-user-ninja"></i></div>
+                            <div class="feat-info">
+                                <h4>Master Stylist Hàng Đầu</h4>
+                                <p>Đội ngũ chuyên gia tóc giàu kinh nghiệm, đào tạo chuyên sâu quốc tế.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feat-icon"><i class="fa-solid fa-bottle-droplet"></i></div>
+                            <div class="feat-info">
+                                <h4>Mỹ Phẩm Cao Cấp Chính Hãng</h4>
+                                <p>100% sản phẩm từ L'Oréal Paris, Olaplex, Kérastase nhập khẩu cao cấp.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feat-icon"><i class="fa-solid fa-shield-heart"></i></div>
+                            <div class="feat-info">
+                                <h4>Bảo Hành Tóc 100% & Tích Điểm VIP</h4>
+                                <p>Cam kết bảo hành miễn phí 14 ngày & tích điểm thưởng cho mọi dịch vụ.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Dịch Vụ Nổi Bật (Redesigned Professional Menu) -->
+    <section class="section-padding bg-darker" id="services">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="sub-heading">MENU DỊCH VỤ CAO CẤP</span>
+                <h2 class="section-title light-text"><i class="fa-solid fa-wand-magic-sparkles text-gold"></i> DỊCH VỤ
+                    TẠO MẪU & CHĂM SÓC TÓC ĐẲNG CẤP</h2>
+                <p class="section-desc">Mỗi dịch vụ tại Hana Hair được cá nhân hóa hoàn toàn theo chất tóc, tỷ lệ gương
+                    mặt và phong cách riêng của bạn.</p>
+
+                <!-- Modern Interactive Service Filter Tabs -->
+                <div class="service-tabs-wrapper" id="serviceFilters">
+                    <button class="s-tab-btn active" data-filter="all">
+                        <i class="fa-solid fa-sparkles"></i> Tất Cả Dịch Vụ <span class="tab-count">8</span>
+                    </button>
+                    <button class="s-tab-btn" data-filter="cut">
+                        <i class="fa-solid fa-scissors"></i> Cắt & Thiết Kế Form
+                    </button>
+                    <button class="s-tab-btn" data-filter="color">
+                        <i class="fa-solid fa-palette"></i> Nhuộm Balayage & Highlight
+                    </button>
+                    <button class="s-tab-btn" data-filter="perm">
+                        <i class="fa-solid fa-wind"></i> Uốn Sóng & Duỗi Ép
+                    </button>
+                    <button class="s-tab-btn" data-filter="treatment">
+                        <i class="fa-solid fa-spa"></i> Phục Hồi & Head Spa
+                    </button>
+                    <button class="s-tab-btn highlight-tab" data-filter="combo">
+                        <i class="fa-solid fa-crown"></i> Combo V.I.P Trọn Gói
+                    </button>
+                </div>
+            </div>
+
+            <!-- Professional Service Cards Grid -->
+            <div class="services-premium-grid" id="servicesGrid">
+
+                <!-- Service 1: Cắt & Thiết Kế Form -->
+                <div class="service-premium-card" data-category="cut">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_cut.png" alt="Combo Cắt & Stylist Thiết Kế Form Tóc">
+                        <span class="sp-floating-tag tag-hot"><i class="fa-solid fa-fire"></i> Best Seller</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 5.0 (620+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">CẮT & TẠO KIỂU</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 45 phút</span>
+                        </div>
+                        <h3 class="sp-title">Combo Cắt & Stylist Thiết Kế Form Tóc</h3>
+                        <p class="sp-desc">Định hình phong cách chuẩn tỷ lệ khuôn mặt, tóc vào nếp tự nhiên sau khi sấy
+                            khô.</p>
+
+                        <!-- Step Checklist -->
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Tư vấn dáng tóc theo nhân
+                                trắc học khuôn mặt</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Gội xả bấm huyệt thư giãn
+                                tinh chất vỏ bưởi</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Cắt tỉa phân lớp kỹ thuật
+                                cao tạo độ bay</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Sấy tạo phồng & dưỡng bóng
+                                tinh dầu Morocco</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">300.000 đ</span>
+                                <span class="sp-price-current">250.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 225.000đ (+250 Pts)</span>
+                                <span class="badge-ai-discount"><i class="fa-solid fa-bolt"></i> AI Flash Sale Off-Peak
+                                    - Giảm 20%</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Combo Cắt & Stylist Thiết Kế Form Tóc">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 2: Nhuộm Balayage -->
+                <div class="service-premium-card" data-category="color">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_color.png" alt="Nhuộm Balayage Hàn Quốc">
+                        <span class="sp-floating-tag tag-trend"><i class="fa-solid fa-bolt"></i> Hot Trend 2026</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 5.0 (890+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">NHUỘM CAO CẤP</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 120 phút</span>
+                        </div>
+                        <h3 class="sp-title">Nhuộm Thời Trang & Balayage Hàn Quốc</h3>
+                        <p class="sp-desc">Kỹ thuật loang màu chuyển sắc đa chiều, mượt mà không lộ chân tóc khi mọc
+                            dài.</p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Test nền tóc & pha màu theo
+                                tone da cá nhân</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Phối màu Balayage chuyển sắc
+                                mượt mà không lem</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> 100% thuốc nhuộm L'Oréal /
+                                Kérastase chính hãng</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Khóa hạt màu & ủ collagen
+                                chống xơ rối</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">1.200.000 đ</span>
+                                <span class="sp-price-current">950.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 855.000đ (+950 Pts)</span>
+                                <span class="badge-ai-discount"><i class="fa-solid fa-bolt"></i> AI Flash Sale Off-Peak
+                                    - Giảm 20%</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Nhuộm Thời Trang & Balayage Hàn Quốc">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 3: Nhuộm Highlight -->
+                <div class="service-premium-card" data-category="color">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_color.png" alt="Nhuộm Highlight / Ombre">
+                        <span class="sp-floating-tag tag-luxury"><i class="fa-solid fa-gem"></i> Phong Cách Trẻ</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 4.9 (430+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">NHUỘM THỜI TRANG</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 100 phút</span>
+                        </div>
+                        <h3 class="sp-title">Nhuộm Highlight / Ombre Sáng Tôn Da</h3>
+                        <p class="sp-desc">Gẩy sợi sáng tinh tế, tạo điểm nhấn cá tính nổi bật và tôn vinh làn da tươi
+                            trẻ.</p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Phân chia lọn Highlight sợi
+                                mảnh tinh xảo</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Xử lý sắc tố vàng, khử ánh
+                                cam chuẩn tone khói</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Bổ sung phức hợp Plex bảo vệ
+                                liên kết sợi tóc</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Sấy lọn xoăn tôn từng dải
+                                sợi màu sắc nét</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">1.100.000 đ</span>
+                                <span class="sp-price-current">850.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 765.000đ (+850 Pts)</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Nhuộm Highlight / Ombre Sáng Tôn Da">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 4: Uốn Sóng Hippie / Sóng Nước -->
+                <div class="service-premium-card" data-category="perm">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_perm.png" alt="Uốn Tóc Sóng Nước Hàn Quốc">
+                        <span class="sp-floating-tag tag-trend"><i class="fa-solid fa-wind"></i> Bồng Bềnh</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 4.9 (510+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">UỐN TÓC HÀN QUỐC</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 90 phút</span>
+                        </div>
+                        <h3 class="sp-title">Uốn Tóc Sóng Xoăn Hippie / Sóng Nước</h3>
+                        <p class="sp-desc">Tạo nếp sóng mềm mại, bồng bềnh tự nhiên không bị già, dễ chăm sóc tại nhà.
+                        </p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Chọn size trục uốn theo mật
+                                độ & độ dài tóc</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Thuốc uốn lạnh/nóng hữu cơ
+                                không mùi độc hại</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Cân bằng độ ẩm và độ đàn hồi
+                                cho từng lọn tóc</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Hướng dẫn kỹ thuật sấy tay
+                                giữ nếp bền lâu</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">1.050.000 đ</span>
+                                <span class="sp-price-current">850.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 765.000đ (+850 Pts)</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Uốn Tóc Sóng Xoăn Hippie / Sóng Nước">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 5: Duỗi Ép Tóc -->
+                <div class="service-premium-card" data-category="perm">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_perm.png" alt="Duỗi Ép Tóc Thẳng Mượt">
+                        <span class="sp-floating-tag tag-luxury"><i class="fa-solid fa-wand-magic"></i> Suôn Mượt</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 4.8 (320+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">DUỖI & ÉP TÓC</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 90 phút</span>
+                        </div>
+                        <h3 class="sp-title">Duỗi / Ép Tóc Thẳng Mượt Tự Nhiên</h3>
+                        <p class="sp-desc">Loại bỏ hoàn toàn tóc bông xù, tạo độ bóng mượt tự nhiên như tơ lụa.</p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Bổ sung đạm Keratin trước
+                                khi can thiệp nhiệt</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Kẹp nhiệt Ceramic tráng ion
+                                âm chống mất nước</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Khóa cấu trúc thẳng tự
+                                nhiên, không bị đơ thẳng đuột</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Phủ bóng tráng gương Nano
+                                bảo vệ biểu bì</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">950.000 đ</span>
+                                <span class="sp-price-current">750.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 675.000đ (+750 Pts)</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Duỗi / Ép Tóc Thẳng Mượt Tự Nhiên">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 6: Phục Hồi Olaplex -->
+                <div class="service-premium-card" data-category="treatment">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_olaplex.png" alt="Phục Hồi Tóc Hư Tổn Olaplex">
+                        <span class="sp-floating-tag tag-hot"><i class="fa-solid fa-shield-virus"></i> Chuẩn Y
+                            Khoa</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 5.0 (750+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">PHỤC HỒI CHUYÊN SÂU</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 60 phút</span>
+                        </div>
+                        <h3 class="sp-title">Phục Hồi Tóc Hư Tổn Chuyên Sâu Olaplex</h3>
+                        <p class="sp-desc">Tái sinh các liên kết lưu huỳnh bị đứt gãy do hóa chất, trả lại mái tóc chắc
+                            khỏe.</p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Chẩn đoán vi cấu trúc & đo
+                                độ co giãn sợi tóc</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Tái tạo liên kết Disulfide
+                                bằng Olaplex No.1</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Khóa màng Lipid biểu bì bằng
+                                Olaplex No.2</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Hấp nhiệt Nano siêu âm đưa
+                                dưỡng chất vào tủy</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">800.000 đ</span>
+                                <span class="sp-price-current">600.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 540.000đ (+600 Pts)</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Phục Hồi Tóc Hư Tổn Chuyên Sâu Olaplex">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 7: Gội Dưỡng Sinh -->
+                <div class="service-premium-card" data-category="treatment">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_spa.png" alt="Gội Đầu Dưỡng Sinh Thảo Mộc">
+                        <span class="sp-floating-tag tag-organic"><i class="fa-solid fa-leaf"></i> 100% Thảo Mộc</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 5.0 (980+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">HEAD SPA DƯỠNG SINH</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 45 phút</span>
+                        </div>
+                        <h3 class="sp-title">Gội Đầu Dưỡng Sinh Thảo Mộc & Massage</h3>
+                        <p class="sp-desc">Thư giãn tinh thần, đả thông kinh lạc vùng đầu, vai gáy và dưỡng nang tóc
+                            phát triển.</p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Bấm huyệt giải tỏa căng
+                                thẳng vùng thái dương</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Gội nước bồ kết nấu tươi với
+                                12 vị thảo dược</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Massage Cổ - Vai - Gáy trị
+                                liệu nhức mỏi</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Xông tinh dầu ngải cứu ấm &
+                                sấy dưỡng tạo nếp</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">200.000 đ</span>
+                                <span class="sp-price-current">150.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 135.000đ (+150 Pts)</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Gội Đầu Dưỡng Sinh Thảo Mộc & Massage Cổ Vai Gáy">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 8: Combo VIP Trọn Gói -->
+                <div class="service-premium-card featured-combo-card" data-category="combo">
+                    <div class="sp-image-container">
+                        <img src="assets/images/service_vip.png" alt="Combo V.I.P Trọn Gói">
+                        <span class="sp-floating-tag tag-vip"><i class="fa-solid fa-crown"></i> Siêu Ưu Đãi</span>
+                        <div class="sp-rating-badge"><i class="fa-solid fa-star text-gold"></i> 5.0 (460+ reviews)</div>
+                    </div>
+                    <div class="sp-body">
+                        <div class="sp-header-row">
+                            <span class="sp-category-label">COMBO ĐẶC BIỆT</span>
+                            <span class="sp-duration"><i class="fa-regular fa-clock"></i> 150 phút</span>
+                        </div>
+                        <h3 class="sp-title">Combo V.I.P Trọn Gói (Cắt + Balayage + Olaplex)</h3>
+                        <p class="sp-desc">F5 diện mạo toàn diện: Cắt thiết kế form + Nhuộm Balayage cao cấp + Phục hồi
+                            Olaplex.</p>
+
+                        <div class="sp-steps-box">
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Trọn gói toàn bộ dịch vụ làm
+                                đẹp cao cấp nhất</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Tặng 01 buổi Gội đầu dưỡng
+                                sinh thảo mộc (150K)</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Ưu tiên Master Stylist hàng
+                                đầu trực tiếp thực hiện</div>
+                            <div class="step-line"><i class="fa-solid fa-check-circle"></i> Thẻ bảo hành màu nhuộm &
+                                kiểu dáng tóc 30 ngày</div>
+                        </div>
+
+                        <div class="sp-footer-meta">
+                            <div class="sp-pricing">
+                                <span class="sp-price-old">2.200.000 đ</span>
+                                <span class="sp-price-current">1.450.000 đ</span>
+                                <span class="sp-vip-hint">VIP: 1.305.000đ (+1.450 Pts)</span>
+                            </div>
+                            <button class="sp-btn-book open-booking-trigger"
+                                data-service="Combo V.I.P Trọn Gói (Cắt + Nhuộm Balayage + Olaplex)">
+                                ĐẶT LỊCH NGAY <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Trust & Quality Commitment Strip -->
+            <div class="services-trust-strip mt-5">
+                <div class="trust-item">
+                    <div class="t-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="t-text">
+                        <h4>Bảo Hành Tóc 14 Ngày</h4>
+                        <p>Chỉnh sửa miễn phí nếu chưa hài lòng</p>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="t-icon"><i class="fa-solid fa-bottle-droplet"></i></div>
+                    <div class="t-text">
+                        <h4>Mỹ Phẩm 100% Chính Hãng</h4>
+                        <p>Nhập khẩu L'Oréal, Olaplex, Kérastase</p>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="t-icon"><i class="fa-solid fa-user-ninja"></i></div>
+                    <div class="t-text">
+                        <h4>Master Stylist 8+ Năm</h4>
+                        <p>Được đào tạo tay nghề chuẩn quốc tế</p>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="t-icon"><i class="fa-solid fa-gift"></i></div>
+                    <div class="t-text">
+                        <h4>Tích Điểm Hoàn Tiền VIP</h4>
+                        <p>1.000đ = 1 điểm, đổi voucher tức thì</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Section: Quản Lý Đặt Lịch (Role-Based Live Management Dashboard) -->
+    <section class="section-padding bg-light-gray" id="management">
+        <div class="container">
+            <div class="management-header-card">
+                <div class="mgmt-title-area">
+                    <span class="sub-heading">QUẢN LÝ LỊCH HẸN & ĐỊNH DANH</span>
+                    <h2 class="section-title"><i class="fa-solid fa-calendar-check text-teal"></i> HỆ THỐNG QUẢN LÝ ĐẶT
+                        LỊCH HANA HAIR</h2>
+                    <p class="section-desc" id="mgmtSubtitle">Theo dõi, tra cứu và cập nhật trạng thái lịch hẹn theo
+                        phân quyền người dùng</p>
+                </div>
+                <div class="mgmt-actions-top">
+                    <div id="roleCurrentBadge" class="role-badge role-guest"><i class="fa-solid fa-user-lock"></i>
+                        Quyền: KHÁCH HÀNG</div>
+                    <button class="btn-gold-fill open-booking-trigger">
+                        <i class="fa-solid fa-plus"></i> ĐẶT LỊCH HẸN MỚI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Statistics Summary Bar (Visible when logged in as ADMIN) -->
+            <div class="admin-stats-bar hidden" id="adminStatsBar">
+                <div class="admin-stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">TỔNG DOANH THU</span>
+                        <h3 id="statTotalRevenue">0 đ</h3>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">LỊCH HOÀN THÀNH</span>
+                        <h3 id="statCompletedBookings">0</h3>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">TỔNG ĐIỂM ĐÃ CỘNG</span>
+                        <h3 id="statTotalPoints">0 Pts</h3>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">TỔNG TÀI KHOẢN</span>
+                        <h3 id="statTotalUsers">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stylist Personal Performance Bar (Visible when logged in as STYLIST) -->
+            <div class="stylist-stats-bar hidden" id="stylistStatsBar">
+                <div class="stylist-stat-card">
+                    <div class="s-stat-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                    <div class="s-stat-info">
+                        <span class="s-stat-label">CA LÀM TÓC ĐÃ HẸN</span>
+                        <h3 id="stylistTotalAssigned">0 ca</h3>
+                    </div>
+                </div>
+                <div class="stylist-stat-card">
+                    <div class="s-stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="s-stat-info">
+                        <span class="s-stat-label">ĐÃ HOÀN THÀNH</span>
+                        <h3 id="stylistCompletedCount">0 ca</h3>
+                    </div>
+                </div>
+                <div class="stylist-stat-card">
+                    <div class="s-stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <div class="s-stat-info">
+                        <span class="s-stat-label">DOANH THU PHỤC VỤ</span>
+                        <h3 id="stylistRevenue">0 đ</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Filter Controls -->
+            <div class="mgmt-filter-bar">
+                <div class="search-input-group">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="bookingSearchInput"
+                        placeholder="Nhập số điện thoại hoặc mã đặt lịch để tra cứu...">
+                </div>
+                <div class="status-filter-group">
+                    <label>Trạng thái:</label>
+                    <select id="bookingStatusFilter" aria-label="Lọc trạng thái lịch hẹn">
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="Xác nhận">Đã xác nhận</option>
+                        <option value="Đang phục vụ">Đang phục vụ làm tóc</option>
+                        <option value="Hoàn thành">Hoàn thành (Tích điểm)</option>
+                        <option value="Đã hủy">Đã hủy</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Bookings List Table / Card Container -->
+            <div class="table-responsive">
+                <table class="booking-table" id="bookingTable">
+                    <thead>
+                        <tr>
+                            <th>Mã Đặt</th>
+                            <th>Khách Hàng</th>
+                            <th>Số Điện Thoại</th>
+                            <th>Chi Nhánh</th>
+                            <th>Dịch Vụ Đã Chọn</th>
+                            <th>Ngày & Giờ</th>
+                            <th>Stylist Phụ Trách</th>
+                            <th>Trạng Thái</th>
+                            <th id="actionTableHeader">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingTableBody">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Display -->
+            <div class="empty-booking-state hidden" id="emptyBookingState">
+                <i class="fa-regular fa-folder-open empty-icon"></i>
+                <h3>Chưa tìm thấy lịch hẹn nào!</h3>
+                <p>Bạn chưa có lịch hẹn nào hoặc tìm kiếm không khớp số điện thoại.</p>
+                <button class="btn-gold-fill open-booking-trigger mt-3">ĐẶT LỊCH HẸN NGAY</button>
+            </div>
+
+            <div class="booking-history-section hidden" id="bookingHistorySection">
+                <div class="history-section-heading">
+                    <h3><i class="fa-solid fa-clock-rotate-left text-gold"></i> LỊCH SỬ ĐẶT LỊCH</h3>
+                    <span>Chỉ tài khoản quản lý và khách hàng đã đăng nhập mới xem được</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="booking-table booking-history-table">
+                        <thead>
+                            <tr>
+                                <th>Mã Đặt</th>
+                                <th>Khách Hàng</th>
+                                <th>Số Điện Thoại</th>
+                                <th>Dịch Vụ</th>
+                                <th>Ngày & Giờ</th>
+                                <th>Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Hệ Thống Chi Nhánh -->
+    <section class="section-padding" id="branches">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="sub-heading">MẠNG LƯỚI TOÀN QUỐC</span>
+                <h2 class="section-title">HỆ THỐNG SALON HANA HAIR</h2>
+                <p class="section-desc">Hơn 10 chi nhánh cao cấp tọa lạc tại các vị trí đắc địa</p>
+            </div>
+
+            <div class="branches-grid">
+                <!-- Branch 1 -->
+                <div class="branch-card">
+                    <div class="branch-badge">Hà Nội</div>
+                    <h3>Hana Hair - Cầu Giấy</h3>
+                    <p class="branch-address"><i class="fa-solid fa-location-dot"></i> 123 Đường Cầu Giấy, Q. Cầu Giấy,
+                        Hà Nội</p>
+                    <p class="branch-phone"><i class="fa-solid fa-phone"></i> 024 3888 9999</p>
+                    <p class="branch-hours"><i class="fa-solid fa-clock"></i> 08:30 - 21:00 (Hàng ngày)</p>
+                    <button class="btn-outline-dark open-booking-trigger" data-branch="Hà Nội - 123 Cầu Giấy">
+                        ĐẶT LỊCH TẠI ĐÂY
+                    </button>
+                </div>
+
+                <!-- Branch 2 -->
+                <div class="branch-card">
+                    <div class="branch-badge">Hà Nội</div>
+                    <h3>Hana Hair - Trần Duy Hưng</h3>
+                    <p class="branch-address"><i class="fa-solid fa-location-dot"></i> 456 Trần Duy Hưng, Q. Cầu Giấy,
+                        Hà Nội</p>
+                    <p class="branch-phone"><i class="fa-solid fa-phone"></i> 024 3999 8888</p>
+                    <p class="branch-hours"><i class="fa-solid fa-clock"></i> 08:30 - 21:00 (Hàng ngày)</p>
+                    <button class="btn-outline-dark open-booking-trigger" data-branch="Hà Nội - 456 Trần Duy Hưng">
+                        ĐẶT LỊCH TẠI ĐÂY
+                    </button>
+                </div>
+
+                <!-- Branch 3 -->
+                <div class="branch-card">
+                    <div class="branch-badge">TP. Hồ Chí Minh</div>
+                    <h3>Hana Hair - Quận 1</h3>
+                    <p class="branch-address"><i class="fa-solid fa-location-dot"></i> 88 Nguyễn Trãi, P. Bến Thành,
+                        Q.1, TP.HCM</p>
+                    <p class="branch-phone"><i class="fa-solid fa-phone"></i> 028 6677 8899</p>
+                    <p class="branch-hours"><i class="fa-solid fa-clock"></i> 08:30 - 21:30 (Hàng ngày)</p>
+                    <button class="btn-outline-dark open-booking-trigger" data-branch="TP.HCM - 88 Nguyễn Trãi, Q.1">
+                        ĐẶT LỊCH TẠI ĐÂY
+                    </button>
+                </div>
+
+                <!-- Branch 4 -->
+                <div class="branch-card">
+                    <div class="branch-badge">Đà Nẵng</div>
+                    <h3>Hana Hair - Hải Châu</h3>
+                    <p class="branch-address"><i class="fa-solid fa-location-dot"></i> 54 Nguyễn Văn Linh, Q. Hải Châu,
+                        Đà Nẵng</p>
+                    <p class="branch-phone"><i class="fa-solid fa-phone"></i> 0236 3555 666</p>
+                    <p class="branch-hours"><i class="fa-solid fa-clock"></i> 08:30 - 21:00 (Hàng ngày)</p>
+                    <button class="btn-outline-dark open-booking-trigger" data-branch="Đà Nẵng - 54 Nguyễn Văn Linh">
+                        ĐẶT LỊCH TẠI ĐÂY
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section: Sản Phẩm Chăm Sóc Tóc Premium -->
+    <section class="section-padding bg-darker" id="products">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="sub-heading">SẢN PHẨM CHÍNH HÃNG</span>
+                <h2 class="section-title light-text">SẢN PHẨM CHĂM SÓC TÓC CAO CẤP</h2>
+                <p class="section-desc">Dưỡng tóc chuẩn Salon ngay tại nhà với các dòng sản phẩm uy tín toàn cầu</p>
+            </div>
+
+            <div class="products-grid">
+                <!-- Product 1 -->
+                <div class="product-card">
+                    <div class="product-img">
+                        <img src="assets/images/service_color.png" alt="Dầu gội Olaplex N3">
+                        <span class="badge-tag">Bán Chạy</span>
+                    </div>
+                    <div class="product-details">
+                        <h4>Tinh Chất Phục Hồi Olaplex No.3 Hair Perfector</h4>
+                        <p class="prod-brand">Olaplex USA</p>
+                        <div class="prod-price-row">
+                            <span class="price-current">790.000 đ</span>
+                            <span class="price-old">950.000 đ</span>
+                        </div>
+                        <button class="btn-add-cart" data-id="p1" data-name="Olaplex No.3 Hair Perfector"
+                            data-price="790000">
+                            <i class="fa-solid fa-cart-plus"></i> THÊM VÀO GIỎ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 2 -->
+                <div class="product-card">
+                    <div class="product-img">
+                        <img src="assets/images/service_cut.png" alt="Dầu dưỡng Kerastase">
+                        <span class="badge-tag gold-bg">Hot</span>
+                    </div>
+                    <div class="product-details">
+                        <h4>Dầu Dưỡng Tóc Kérastase Elixir Ultime 100ml</h4>
+                        <p class="prod-brand">Kérastase Paris</p>
+                        <div class="prod-price-row">
+                            <span class="price-current">1.250.000 đ</span>
+                            <span class="price-old">1.400.000 đ</span>
+                        </div>
+                        <button class="btn-add-cart" data-id="p2" data-name="Kérastase Elixir Ultime 100ml"
+                            data-price="1250000">
+                            <i class="fa-solid fa-cart-plus"></i> THÊM VÀO GIỎ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 3 -->
+                <div class="product-card">
+                    <div class="product-img">
+                        <img src="assets/images/product_showcase.png" alt="Bộ Gội Xả L'Oreal">
+                    </div>
+                    <div class="product-details">
+                        <h4>Bộ Dầu Gội & Xả L'Oréal Professionnel Vitamino Color</h4>
+                        <p class="prod-brand">L'Oréal France</p>
+                        <div class="prod-price-row">
+                            <span class="price-current">880.000 đ</span>
+                            <span class="price-old">1.050.000 đ</span>
+                        </div>
+                        <button class="btn-add-cart" data-id="p3" data-name="Bộ Gội Xả L'Oréal Vitamino Color"
+                            data-price="880000">
+                            <i class="fa-solid fa-cart-plus"></i> THÊM VÀO GIỎ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="logo-box mb-3">
+                        <span class="logo-title">HANA</span>
+                        <span class="logo-subtitle">HAIR SALON</span>
+                    </div>
+                    <p>Thương hiệu Salon tóc hàng đầu Việt Nam. Nơi mang lại cho bạn vẻ đẹp tự tin và phong cách đẳng
+                        cấp.</p>
+                    <div class="social-links mt-3">
+                        <a href="#" title="Facebook" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i><span
+                                class="sr-only">Facebook</span></a>
+                        <a href="#" title="Instagram" aria-label="Instagram"><i class="fa-brands fa-instagram"></i><span
+                                class="sr-only">Instagram</span></a>
+                        <a href="#" title="TikTok" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i><span
+                                class="sr-only">TikTok</span></a>
+                        <a href="#" title="YouTube" aria-label="YouTube"><i class="fa-brands fa-youtube"></i><span
+                                class="sr-only">YouTube</span></a>
+                    </div>
+                </div>
+
+                <div class="footer-col">
+                    <h4>VỀ HANA HAIR</h4>
+                    <ul>
+                        <li><a href="#about">Giới thiệu thương hiệu</a></li>
+                        <li><a href="#branches">Hệ thống chi nhánh</a></li>
+                        <li><a href="#services">Dịch vụ nổi bật</a></li>
+                        <li><a href="#rewards">Tích điểm VIP</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>CHÍNH SÁCH</h4>
+                    <ul>
+                        <li><a href="#">Chính sách bảo hành tóc 14 ngày</a></li>
+                        <li><a href="#">Chính sách tích điểm & đổi quà</a></li>
+                        <li><a href="#">Điều khoản sử dụng dịch vụ</a></li>
+                        <li><a href="#">Hình thức thanh toán</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>LIÊN HỆ & ĐẶT LỊCH</h4>
+                    <p><i class="fa-solid fa-phone text-gold"></i> Hotline Đặt Lịch: <strong>1900 63 68 83</strong></p>
+                    <p><i class="fa-solid fa-envelope text-gold"></i> Email: cskh@hanahairsalon.com</p>
+                    <p><i class="fa-solid fa-clock text-gold"></i> Giờ làm việc: 08:30 - 21:00</p>
+                    <button class="btn-gold-fill btn-block mt-3 open-booking-trigger">
+                        <i class="fa-solid fa-calendar-days"></i> ĐẶT LỊCH ONLINE
+                    </button>
+                </div>
+            </div>
+
+            <div class="footer-bottom text-center">
+                <p>&copy; 2026 HANA HAIR SALON. Multi-Actor System (Admin, Master Stylist & Customer Roles).</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL: AUTHENTICATION (ĐĂNG NHẬP / ĐĂNG KÝ) -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card modal-sm">
+            <button class="modal-close" id="closeAuthModalBtn">&times;</button>
+            <div class="modal-header text-center">
+                <div class="logo-subtitle text-gold mb-1">HANA HAIR SALON</div>
+                <h2 id="authModalTitle">ĐĂNG NHẬP TÀI KHOẢN</h2>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="tabLoginBtn">Đăng Nhập</button>
+                <button class="auth-tab-btn" id="tabRegisterBtn">Đăng Ký</button>
+            </div>
+
+            <!-- Demo Quick Login Options Box for 3 Actors -->
+            <div class="demo-login-box mb-4">
+                <span class="demo-label"><i class="fa-solid fa-key"></i> Đăng nhập nhanh Demo theo vai trò:</span>
+                <div class="demo-btn-group flex-wrap">
+                    <button class="btn-demo-acc btn-demo-user" id="btnQuickLoginUser">
+                        <i class="fa-solid fa-user"></i> Khách Hàng (Minh Anh)
+                    </button>
+                    <button class="btn-demo-acc btn-demo-stylist" id="btnQuickLoginStylist">
+                        <i class="fa-solid fa-scissors"></i> Thợ Tóc (Alex Nguyễn)
+                    </button>
+                    <button class="btn-demo-acc btn-demo-admin" id="btnQuickLoginAdmin">
+                        <i class="fa-solid fa-user-shield"></i> Quản Trị Viên (Admin)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Số Điện Thoại / Tên Đăng Nhập</label>
+                    <input type="text" class="form-control-custom" id="loginPhone"
+                        placeholder="Ví dụ: 0988123456, stylist_alex, hoặc admin" required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Mật Khẩu</label>
+                    <input type="password" class="form-control-custom" id="loginPassword" placeholder="Nhập mật khẩu..."
+                        required>
+                </div>
+                <button type="submit" class="btn-gold-fill btn-block mt-4"><i class="fa-solid fa-right-to-bracket"></i>
+                    ĐĂNG NHẬP NGAY</button>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Họ và Tên</label>
+                    <input type="text" class="form-control-custom" id="regName" placeholder="Nhập họ tên của bạn..."
+                        required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Số Điện Thoại (Tài khoản)</label>
+                    <input type="tel" class="form-control-custom" id="regPhone" placeholder="Ví dụ: 0912345678" required
+                        pattern="[0-9]{9,11}">
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Mật Khẩu</label>
+                    <input type="password" class="form-control-custom" id="regPassword" placeholder="Tạo mật khẩu..."
+                        required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label" for="regRole">Loại tài khoản</label>
+                    <select class="form-control-custom" id="regRole" required>
+                        <option value="USER">Người dùng</option>
+                        <option value="STYLIST">Thợ tóc</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-gold-fill btn-block mt-4"><i class="fa-solid fa-user-plus"></i> ĐĂNG KÝ
+                    THÀNH VIÊN VIP</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: STYLIST UPDATE STATUS MODAL -->
+    <div class="modal-overlay" id="stylistStatusModal">
+        <div class="modal-card modal-sm">
+            <button class="modal-close" id="closeStylistModalBtn">&times;</button>
+            <div class="modal-header">
+                <h2>CẬP NHẬT TIẾN ĐỘ THỰC HIỆN</h2>
+                <p class="text-muted font-size-sm">Ca làm tóc: <strong id="stylistBookingIdTag"
+                        class="text-gold"></strong></p>
+            </div>
+            <form class="modal-body" id="stylistStatusForm">
+                <input type="hidden" id="stylistBookingId">
+
+                <!-- AI Insight Box cho Stylist -->
+                <div class="ai-insight-box">
+                    <div class="ai-insight-header">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>AI Insight - Gợi ý cho Stylist</span>
+                        <span class="ai-insight-badge">LIVE</span>
+                    </div>
+                    <div class="ai-insight-content">
+                        <div class="ai-insight-row">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <div>
+                                <strong>Mẫu tóc khách đã thử AI:</strong>
+                                <span id="aiInsightTriedStyle">Layer Dài Cổ Điển (Khớp 98%)</span>
+                            </div>
+                        </div>
+                        <div class="ai-insight-row warning">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <div>
+                                <strong>Cảnh báo lịch sử hóa chất:</strong>
+                                <span id="aiInsightChemWarning">Khách đã nhuộm tẩy 2 lần trong 3 tháng — khuyến nghị
+                                    kiểm tra độ đàn hồi tóc trước khi can thiệp hóa chất.</span>
+                            </div>
+                        </div>
+                        <div class="ai-insight-row">
+                            <i class="fa-solid fa-clock"></i>
+                            <div>
+                                <strong>Thời gian dự kiến tối ưu:</strong>
+                                <span>~75 phút (AI tính dựa trên dịch vụ & lịch sử)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Khách hàng:</label>
+                    <input type="text" class="form-control-custom" id="stylistCustName" aria-label="Tên khách hàng"
+                        readonly>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Dịch vụ yêu cầu:</label>
+                    <input type="text" class="form-control-custom" id="stylistServiceText"
+                        aria-label="Dịch vụ khách hàng" readonly>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label"><i class="fa-solid fa-scissors text-gold"></i> Trạng Thái Tiến Độ Làm
+                        Tóc</label>
+                    <select class="form-control-custom" id="stylistNewStatus" aria-label="Trạng thái mới" required>
+                        <option value="Xác nhận">1. Đã tiếp nhận (Chờ khách đến)</option>
+                        <option value="Đang phục vụ">2. Đang phục vụ cắt / gội / uốn / nhuộm</option>
+                        <option value="Hoàn thành">3. Hoàn thành ca làm (Cộng điểm cho khách)</option>
+                    </select>
+                </div>
+                <div class="form-step-actions space-between mt-4">
+                    <button type="button" class="btn-outline-dark" id="btnCancelStylistModal">ĐÓNG</button>
+                    <button type="submit" class="btn-gold-fill"><i class="fa-solid fa-check"></i> CẬP NHẬT TIẾN
+                        ĐỘ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: USER PROFILE & LOYALTY WALLET -->
+    <div class="modal-overlay" id="userProfileModal">
+        <div class="modal-card">
+            <button class="modal-close" id="closeProfileModalBtn">&times;</button>
+            <div class="user-profile-header">
+                <div class="up-avatar-big"><i class="fa-solid fa-user"></i></div>
+                <div class="up-user-info">
+                    <h2 id="upUserName">---</h2>
+                    <p id="upUserPhone">---</p>
+                    <div class="up-tier-badge" id="upUserTierBadge"><i class="fa-solid fa-crown"></i> HẠNG VÀNG</div>
+                </div>
+                <div class="up-points-big">
+                    <span class="pts-label">TỔNG ĐIỂM TÍCH LŨY</span>
+                    <h1 id="upUserPoints">0</h1>
+                    <span class="pts-unit">Điểm thưởng (Pts)</span>
+                </div>
+            </div>
+
+            <!-- Tier Progress Bar -->
+            <div class="tier-progress-container mt-4">
+                <div class="tier-progress-labels">
+                    <span>Đồng (0 Pts)</span>
+                    <span>Bạc (500 Pts)</span>
+                    <span class="active-label">Vàng (1.000 Pts)</span>
+                    <span>Kim Cương (2.500 Pts)</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="upProgressBar"></div>
+                </div>
+                <p class="progress-hint-text" id="upProgressHint">Còn 1.250 điểm nữa để lên hạng Kim Cương (Giảm 15%)
+                </p>
+            </div>
+
+            <!-- Wallet Vouchers Owned -->
+            <div class="user-vouchers-box mt-4">
+                <h3><i class="fa-solid fa-wallet text-gold"></i> VÍ VOUCHER CỦA TÔI (<span
+                        id="userVoucherCount">0</span>)</h3>
+                <div class="user-voucher-list" id="userVoucherList">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+
+            <!-- Point History Logs -->
+            <div class="point-history-box mt-4">
+                <h3><i class="fa-solid fa-clock-rotate-left text-teal"></i> LỊCH SỬ TÍCH / TIÊU ĐIỂM</h3>
+                <div class="history-list" id="pointHistoryList">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Full Booking Modal (ĐẶT LỊCH) -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal-card">
+            <button class="modal-close" id="closeBookingModalBtn">&times;</button>
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <span class="logo-subtitle text-gold">HANA HAIR SALON</span>
+                    <h2>ĐẶT LỊCH HẸN TRỰC TUYẾN</h2>
+                </div>
+                <!-- Step Bar -->
+                <div class="step-indicator">
+                    <div class="step-item active" id="stepInd1">1. Chi nhánh & Dịch vụ</div>
+                    <div class="step-item" id="stepInd2">2. Stylist & Thời gian</div>
+                    <div class="step-item" id="stepInd3">3. Thông tin & Ưu đãi</div>
+                </div>
+            </div>
+
+            <form class="modal-body" id="fullBookingForm">
+                <!-- STEP 1 -->
+                <div class="form-step active" id="formStep1">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-location-dot text-gold"></i> Chọn Chi Nhánh
+                            Salon</label>
+                        <div class="branch-radio-group">
+                            <label class="radio-card">
+                                <input type="radio" name="modalBranch" value="Hà Nội - 123 Cầu Giấy" checked>
+                                <div class="radio-content">
+                                    <strong>Hà Nội - Cầu Giấy</strong>
+                                    <span>123 Đường Cầu Giấy, Q. Cầu Giấy</span>
+                                </div>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="modalBranch" value="Hà Nội - 456 Trần Duy Hưng">
+                                <div class="radio-content">
+                                    <strong>Hà Nội - Trần Duy Hưng</strong>
+                                    <span>456 Trần Duy Hưng, Q. Cầu Giấy</span>
+                                </div>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="modalBranch" value="TP.HCM - 88 Nguyễn Trãi, Q.1">
+                                <div class="radio-content">
+                                    <strong>TP.HCM - Nguyễn Trãi Q.1</strong>
+                                    <span>88 Nguyễn Trãi, P. Bến Thành, Q.1</span>
+                                </div>
+                            </label>
+
+                            <label class="radio-card">
+                                <input type="radio" name="modalBranch" value="Đà Nẵng - 54 Nguyễn Văn Linh">
+                                <div class="radio-content">
+                                    <strong>Đà Nẵng - Nguyễn Văn Linh</strong>
+                                    <span>54 Nguyễn Văn Linh, Q. Hải Châu</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="form-label"><i class="fa-solid fa-scissors text-gold"></i> Chọn Dịch Vụ Mái
+                            Tóc</label>
+                        <select class="form-control-custom" id="modalServiceSelect" aria-label="Dịch vụ đặt lịch">
+                            <option value="Combo Cắt & Stylist Thiết Kế Form Tóc" data-price="250000">Combo Cắt &
+                                Stylist Thiết Kế Form Tóc - 250.000đ (+250 Pts)</option>
+                            <option value="Nhuộm Thời Trang & Balayage Hàn Quốc" data-price="950000">Nhuộm Thời Trang &
+                                Balayage Hàn Quốc - 950.000đ (+950 Pts)</option>
+                            <option value="Nhuộm Highlight / Ombre Sáng Tôn Da" data-price="850000">Nhuộm Highlight /
+                                Ombre Sáng Tôn Da - 850.000đ (+850 Pts)</option>
+                            <option value="Uốn Tóc Sóng Xoăn Hippie / Sóng Nước" data-price="850000">Uốn Tóc Sóng Xoăn
+                                Hippie / Sóng Nước - 850.000đ (+850 Pts)</option>
+                            <option value="Duỗi / Ép Tóc Thẳng Mượt Tự Nhiên" data-price="750000">Duỗi / Ép Tóc Thẳng
+                                Mượt Tự Nhiên - 750.000đ (+750 Pts)</option>
+                            <option value="Phục Hồi Tóc Hư Tổn Chuyên Sâu Olaplex" data-price="600000">Phục Hồi Tóc Hư
+                                Tổn Chuyên Sâu Olaplex - 600.000đ (+600 Pts)</option>
+                            <option value="Gội Đầu Dưỡng Sinh Thảo Mộc & Massage Cổ Vai Gáy" data-price="150000">Gội Đầu
+                                Dưỡng Sinh Thảo Mộc & Massage Cổ Vai Gáy - 150.000đ (+150 Pts)</option>
+                            <option value="Combo V.I.P Trọn Gói (Cắt + Nhuộm Balayage + Olaplex)" data-price="1450000">
+                                Combo V.I.P Trọn Gói (Cắt + Balayage + Olaplex) - 1.450.000đ (+1.450 Pts)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-step-actions">
+                        <button type="button" class="btn-gold-fill" id="btnGoToStep2">TIẾP THEO: CHỌN GIỜ & STYLIST
+                            &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="form-step" id="formStep2">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-user-ninja text-gold"></i> Chọn Master
+                            Stylist</label>
+                        <div class="stylist-picker-grid">
+                            <label class="stylist-card">
+                                <input type="radio" name="modalStylist" value="Alex Nguyễn (Master Balayage)" checked>
+                                <div class="stylist-info">
+                                    <div class="stylist-avatar"><i class="fa-solid fa-user-tie"></i></div>
+                                    <strong>Alex Nguyễn</strong>
+                                    <span>Master Balayage</span>
+                                </div>
+                            </label>
+                            <label class="stylist-card">
+                                <input type="radio" name="modalStylist" value="Minh Tuấn (Senior Stylist)">
+                                <div class="stylist-info">
+                                    <div class="stylist-avatar"><i class="fa-solid fa-user-gear"></i></div>
+                                    <strong>Minh Tuấn</strong>
+                                    <span>Senior Barber</span>
+                                </div>
+                            </label>
+                            <label class="stylist-card">
+                                <input type="radio" name="modalStylist" value="Linh Dan (Chuyên Uốn Hàn Quốc)">
+                                <div class="stylist-info">
+                                    <div class="stylist-avatar"><i class="fa-solid fa-user"></i></div>
+                                    <strong>Linh Dan</strong>
+                                    <span>Chuyên Uốn Nữ</span>
+                                </div>
+                            </label>
+                            <label class="stylist-card">
+                                <input type="radio" name="modalStylist" value="Salon Tự Sắp Xếp">
+                                <div class="stylist-info">
+                                    <div class="stylist-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                                    <strong>Ngẫu nhiên</strong>
+                                    <span>Salon xếp Stylist</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="form-label"><i class="fa-solid fa-calendar-day text-gold"></i> Chọn Ngày & Giờ
+                            Đến</label>
+                        <div class="grid-2-col gap-2">
+                            <input type="date" class="form-control-custom" id="modalBookingDate"
+                                aria-label="Ngày đặt lịch" required>
+                            <select class="form-control-custom" id="modalBookingTime" aria-label="Giờ đặt lịch"
+                                required>
+                                <option value="08:30">08:30 AM</option>
+                                <option value="09:30">09:30 AM</option>
+                                <option value="10:30">10:30 AM</option>
+                                <option value="13:30">01:30 PM</option>
+                                <option value="15:00">03:00 PM</option>
+                                <option value="16:30">04:30 PM</option>
+                                <option value="18:00">06:00 PM</option>
+                                <option value="19:30">07:30 PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-step-actions space-between">
+                        <button type="button" class="btn-outline-dark" id="btnBackToStep1">&larr; QUAY LẠI</button>
+                        <button type="button" class="btn-gold-fill" id="btnGoToStep3">TIẾP THEO: XÁC NHẬN & ƯU ĐÃI
+                            &rarr;</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="form-step" id="formStep3">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-user text-gold"></i> Họ và Tên Khách
+                            Hàng</label>
+                        <input type="text" class="form-control-custom" id="modalCustomerName"
+                            placeholder="Nhập đầy đủ họ tên..." required>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label class="form-label"><i class="fa-solid fa-phone text-gold"></i> Số Điện Thoại Đặt Lịch
+                            (Tích điểm VIP)</label>
+                        <input type="tel" class="form-control-custom" id="modalCustomerPhone"
+                            placeholder="Ví dụ: 0988123456" required pattern="[0-9]{9,11}">
+                    </div>
+
+                    <!-- Voucher Selection from User Wallet -->
+                    <div class="form-group mt-3">
+                        <label class="form-label"><i class="fa-solid fa-ticket text-gold"></i> Chọn Voucher Giảm Giá (Từ
+                            ví điểm)</label>
+                        <select class="form-control-custom" id="modalVoucherSelect" aria-label="Voucher áp dụng">
+                            <option value="" data-discount="0">--- Không sử dụng Voucher ---</option>
+                        </select>
+                    </div>
+
+                    <!-- Ghi chú / Kiểu tóc AI đã chọn -->
+                    <div class="form-group mt-3">
+                        <label class="form-label"><i class="fa-solid fa-note-sticky text-gold"></i> Ghi Chú / Kiểu Tóc AI Đã Chọn</label>
+                        <input type="text" class="form-control-custom" id="bookingNote"
+                            placeholder="Ghi chú yêu cầu đặc biệt hoặc kiểu tóc tư vấn...">
+                    </div>
+
+                    <div class="summary-box mt-3">
+                        <h4><i class="fa-solid fa-receipt"></i> TỔNG HỢP ĐẶT LỊCH</h4>
+                        <div class="summary-row">
+                            <span>Dịch vụ:</span>
+                            <strong id="summaryServiceText">---</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Chi nhánh:</span>
+                            <strong id="summaryBranchText">---</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Thời gian:</span>
+                            <strong id="summaryTimeText">---</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Giảm giá Voucher / Hạng VIP:</span>
+                            <strong class="text-danger" id="summaryDiscountText">-0 đ</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tổng tiền thanh toán dự kiến:</span>
+                            <strong class="text-gold" id="summaryPriceText">0 đ</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Điểm tích lũy nhận được:</span>
+                            <strong class="text-teal" id="summaryPointsEarnedText">+0 Pts</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-step-actions space-between mt-4">
+                        <button type="button" class="btn-outline-dark" id="btnBackToStep2">&larr; QUAY LẠI</button>
+                        <button type="submit" class="btn-gold-fill"><i class="fa-solid fa-check-circle"></i> XÁC NHẬN
+                            ĐẶT LỊCH HẸN</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit Booking Modal (Chỉnh sửa / Hủy lịch cho Admin) -->
+    <div class="modal-overlay" id="editBookingModal">
+        <div class="modal-card">
+            <button class="modal-close" id="closeEditModalBtn">&times;</button>
+            <div class="modal-header">
+                <h2>CẬP NHẬT LỊCH HẸN (ADMIN): <span id="editBookingIdTag" class="text-gold"></span></h2>
+            </div>
+            <form class="modal-body" id="editBookingForm">
+                <input type="hidden" id="editBookingId">
+                <div class="form-group">
+                    <label class="form-label">Tên khách hàng</label>
+                    <input type="text" class="form-control-custom" id="editCustomerName"
+                        aria-label="Tên khách hàng cần sửa" required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="tel" class="form-control-custom" id="editCustomerPhone"
+                        aria-label="Số điện thoại khách hàng cần sửa" required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Chi nhánh</label>
+                    <select class="form-control-custom" id="editBranch" aria-label="Chi nhánh cần sửa">
+                        <option value="Hà Nội - 123 Cầu Giấy">Hà Nội - 123 Cầu Giấy</option>
+                        <option value="Hà Nội - 456 Trần Duy Hưng">Hà Nội - 456 Trần Duy Hưng</option>
+                        <option value="TP.HCM - 88 Nguyễn Trãi, Q.1">TP.HCM - 88 Nguyễn Trãi, Q.1</option>
+                        <option value="Đà Nẵng - 54 Nguyễn Văn Linh">Đà Nẵng - 54 Nguyễn Văn Linh</option>
+                    </select>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Ngày hẹn</label>
+                    <input type="date" class="form-control-custom" id="editBookingDate" aria-label="Ngày hẹn cần sửa"
+                        required>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Khung giờ</label>
+                    <select class="form-control-custom" id="editBookingTime" aria-label="Giờ hẹn cần sửa">
+                        <option value="08:30">08:30 AM</option>
+                        <option value="09:30">09:30 AM</option>
+                        <option value="10:30">10:30 AM</option>
+                        <option value="13:30">01:30 PM</option>
+                        <option value="15:00">03:00 PM</option>
+                        <option value="16:30">04:30 PM</option>
+                        <option value="18:00">06:00 PM</option>
+                    </select>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label">Trạng Thái (Đánh dấu 'Hoàn thành' để cộng điểm tự động)</label>
+                    <select class="form-control-custom" id="editBookingStatus" aria-label="Trạng thái lịch cần sửa">
+                        <option value="Xác nhận">Đã xác nhận</option>
+                        <option value="Đang phục vụ">Đang phục vụ làm tóc</option>
+                        <option value="Hoàn thành">Hoàn thành (Cộng điểm tích lũy)</option>
+                        <option value="Đã hủy">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="form-step-actions space-between mt-4">
+                    <button type="button" class="btn-danger" id="btnDeleteBooking"><i class="fa-solid fa-trash"></i> HỦY
+                        LỊCH NÀY</button>
+                    <button type="submit" class="btn-gold-fill"><i class="fa-solid fa-floppy-disk"></i> LƯU THAY
+                        ĐỔI</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DRAWER: Shopping Cart Drawer -->
+    <div class="cart-drawer-overlay" id="cartDrawerOverlay"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="drawer-header">
+            <h3><i class="fa-solid fa-cart-shopping text-gold"></i> GIỎ HÀNG SẢN PHẨM</h3>
+            <button class="drawer-close" id="closeCartDrawerBtn">&times;</button>
+        </div>
+        <div class="drawer-body" id="cartItemsList">
+            <!-- Cart items populated by JS -->
+        </div>
+        <div class="drawer-footer">
+            <div class="cart-total-row">
+                <span>TỔNG TIỀN:</span>
+                <strong id="cartTotalPrice" class="text-gold">0 đ</strong>
+            </div>
+            <button class="btn-gold-fill btn-block" id="checkoutBtn"><i class="fa-solid fa-credit-card"></i> THANH TOÁN
+                GIỎ HÀNG</button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== MODAL: AI TRY-ON FULLSCREEN & KẾT QUẢ CHỤP ẢNH 3D ===== -->
+    <div class="modal-overlay" id="aiTryOnModal">
+        <div class="modal-card ai-tryon-modal-card" style="max-width: 1000px; width: 95%; max-height: 90vh; overflow-y: auto; background: linear-gradient(180deg, #12151c 0%, #0d0f14 100%); border: 1px solid rgba(223, 161, 50, 0.4); border-radius: 24px; padding: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.85);">
+            <button class="modal-close" id="closeAiTryOnModalBtn" style="font-size: 2rem; color: #dfa132; cursor: pointer; background: transparent; border: none; position: absolute; top: 18px; right: 22px; z-index: 10;" title="Đóng cửa sổ">&times;</button>
+            <div class="modal-header" style="margin-bottom: 20px;">
+                <div class="modal-title-box">
+                    <span class="logo-subtitle text-gold" style="font-size: 0.85rem; font-weight: 700; letter-spacing: 2px;"><i class="fa-solid fa-camera"></i> HANA 3D SNAPSHOT STUDIO</span>
+                    <h2 style="font-size: 1.5rem; color: #fff; margin-top: 4px;"><i class="fa-solid fa-wand-magic-sparkles text-gold"></i> KẾT QUẢ CHỤP ẢNH & THỬ TÓC AI</h2>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div class="ai-fullscreen-preview" style="display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start;">
+                    <!-- Cột trái: Canvas hiển thị ảnh chụp 3D chân thực -->
+                    <div class="ai-snap-preview-col" style="position: relative; width: 100%; aspect-ratio: 4/3; background: #05070a; border-radius: 16px; overflow: hidden; border: 1px solid rgba(223,161,50,0.3); box-shadow: 0 8px 30px rgba(0,0,0,0.7);">
+                        <canvas id="aiTryOnCanvasSnapEngine" style="width: 100%; height: 100%; object-fit: contain; display: block;"></canvas>
+                        <div class="tryon-ai-badge" style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: #dfa132; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(223,161,50,0.3);"><i class="fa-solid fa-camera-retro"></i> ẢNH GƯƠNG 3D AR THỰC TẾ</div>
+                    </div>
+
+                    <!-- Cột phải: Thông tin nhận xét, ưu nhược điểm, tải ảnh & đặt lịch -->
+                    <div class="ai-fullscreen-sidebar" style="display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Bảng Dáng Mặt & Ưu / Nhược Điểm -->
+                        <div class="ai-snap-metrics-card" style="background: rgba(223,161,50,0.08); border: 1px solid rgba(223,161,50,0.25); border-radius: 14px; padding: 16px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <strong id="aiSnapHairName" style="color: #dfa132; font-size: 1.15rem;">Layer Nữ Cúp Ngọn 3D</strong>
+                                <span id="aiSnapMatchVal" style="background: rgba(34,197,94,0.2); color: #4ade80; padding: 3px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700;">98% Phù Hợp</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #fff; margin-bottom: 8px;">
+                                Màu nhuộm: <strong id="aiSnapColorName" style="color: #dfa132;">Nâu Tự Nhiên</strong>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #fff; margin-bottom: 12px;">
+                                Dáng mặt: <strong id="aiSnapShape" style="color: #f0c56c;">Oval (Trái Xoan)</strong> | Tone da: <strong id="aiSnapSkin" style="color: #f0c56c;">Warm Beige</strong>
+                            </div>
+
+                            <!-- Ưu & Nhược Điểm & Lời Khuyên -->
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 10px; font-size: 0.8rem;">
+                                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); padding: 9px 12px; border-radius: 8px;">
+                                    <strong style="color: #4ade80; display: block; margin-bottom: 3px;"><i class="fa-solid fa-circle-check"></i> Ưu Điểm Tôn Dáng:</strong>
+                                    <span id="aiSnapPros" style="color: rgba(255,255,255,0.9); line-height: 1.4;">Tạo độ bay bổng tự nhiên, che khuyết điểm gò má và giúp khuôn mặt thon gọn chuẩn V-line.</span>
+                                </div>
+                                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); padding: 9px 12px; border-radius: 8px;">
+                                    <strong style="color: #f87171; display: block; margin-bottom: 3px;"><i class="fa-solid fa-triangle-exclamation"></i> Lưu Ý / Cần Cân Bằng:</strong>
+                                    <span id="aiSnapCons" style="color: rgba(255,255,255,0.9); line-height: 1.4;">Nên sấy cúp đuôi nhẹ sau khi gội để duy trì độ phồng mềm mại.</span>
+                                </div>
+                                <div style="background: rgba(223, 161, 50, 0.1); border: 1px solid rgba(223, 161, 50, 0.25); padding: 9px 12px; border-radius: 8px;">
+                                    <strong style="color: #dfa132; display: block; margin-bottom: 3px;"><i class="fa-solid fa-lightbulb"></i> Lời Khuyên Stylist Hana:</strong>
+                                    <span id="aiSnapAdvice" style="color: rgba(255,255,255,0.9); line-height: 1.4;">Kiểu tóc này cực kỳ tôn nét thanh tú khi kết hợp cùng các tone màu nhuộm sáng da.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút Hành Động: Đặt Lịch, Tải Ảnh, Quay Lại Gương 3D -->
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
+                            <button class="btn btn-gold btn-block" id="btnBookFromFullscreen" style="padding: 13px; border-radius: 12px; font-weight: 700; font-size: 0.95rem; background: linear-gradient(135deg, #dfa132, #c5861b); color: #000; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(223,161,50,0.4);">
+                                <i class="fa-solid fa-calendar-check"></i> 📅 ĐẶT LỊCH VỚI KIỂU TÓC NÀY
+                            </button>
+                            <button class="btn btn-block" id="btnDownloadAiSnap" style="padding: 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); cursor: pointer; transition: all 0.2s ease;">
+                                <i class="fa-solid fa-download"></i> 💾 TẢI ẢNH VỀ MÁY (LƯU ẢNH)
+                            </button>
+                            <button class="btn btn-outline-light btn-block" id="btnCloseAiFullscreen" style="padding: 11px; border-radius: 12px; font-weight: 600; font-size: 0.85rem; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> ✕ QUAY LẠI GƯƠNG 3D
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FLOATING CHATBOT AI 24/7 WIDGET ===== -->
+    <div class="ai-chatbot-widget" id="aiChatbotWidget">
+        <!-- Toggle Button -->
+        <button class="chatbot-toggle-btn" id="chatbotToggleBtn" title="Chat với AI Hana">
+            <i class="fa-solid fa-robot"></i>
+            <span class="chatbot-toggle-label">AI 24/7</span>
+            <span class="chatbot-notification-dot"></span>
+        </button>
+
+        <!-- Chatbot Drawer -->
+        <div class="chatbot-drawer" id="chatbotDrawer">
+            <div class="chatbot-header">
+                <div class="chatbot-avatar">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="chatbot-header-info">
+                    <h4>Hana AI Assistant</h4>
+                    <span class="chatbot-status"><span class="chatbot-online-dot"></span> Trực tuyến 24/7</span>
+                </div>
+                <button class="chatbot-close-btn" id="chatbotCloseBtn">&times;</button>
+            </div>
+
+            <div class="chatbot-messages" id="chatbotMessages">
+                <!-- Tin nhắn mẫu -->
+                <div class="chatbot-msg bot-msg">
+                    <div class="bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="msg-bubble">
+                        Xin chào! Tôi là Hana AI 🌸 Tôi có thể giúp bạn:
+                        <ul class="chatbot-quick-list">
+                            <li>💇 Tư vấn kiểu tóc phù hợp</li>
+                            <li>📅 Đặt lịch hẹn nhanh</li>
+                            <li>💰 Tra cứu bảng giá dịch vụ</li>
+                            <li>🎁 Kiểm tra điểm tích lũy VIP</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="chatbot-msg bot-msg">
+                    <div class="bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="msg-bubble">Bạn muốn tư vấn điều gì hôm nay? 😊</div>
+                </div>
+            </div>
+
+            <!-- Quick Reply Chips -->
+            <div class="chatbot-quick-replies" id="chatbotQuickReplies">
+                <button class="quick-reply-chip" data-msg="Tư vấn kiểu tóc cho mặt tròn">💇 Tư vấn kiểu tóc</button>
+                <button class="quick-reply-chip" data-msg="Bảng giá dịch vụ">💰 Xem bảng giá</button>
+                <button class="quick-reply-chip" data-msg="Đặt lịch hẹn">📅 Đặt lịch</button>
+                <button class="quick-reply-chip" data-msg="Kiểm tra điểm thưởng">⭐ Điểm thưởng</button>
+            </div>
+
+            <!-- Input Box -->
+            <div class="chatbot-input-area">
+                <input type="text" id="chatbotInput" class="chatbot-input" placeholder="Nhập câu hỏi của bạn...">
+                <button class="chatbot-send-btn" id="chatbotSendBtn" title="Gửi tin nhắn" aria-label="Gửi tin nhắn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="aiCameraModal">
+        <div class="modal-card modal-sm ai-camera-modal-card">
+            <button class="modal-close" id="closeAiCameraModalBtn">&times;</button>
+            <div class="modal-header text-center">
+                <h2><i class="fa-solid fa-camera text-gold"></i> CHỤP ẢNH KHUÔN MẶT</h2>
+                <p class="text-muted">Đưa mặt vào giữa khung hình bầu dục và nhìn thẳng camera</p>
+            </div>
+            <div class="ai-camera-wrapper">
+                <video id="aiCameraVideo" class="ai-camera-video" autoplay playsinline muted></video>
+                <div class="ai-camera-face-guide"></div>
+            </div>
+            <div class="ai-camera-status" id="aiCameraStatus">Đang chuẩn bị camera...</div>
+            <button class="btn-gold-fill btn-block mt-3" id="btnCaptureAiPhoto">
+                <i class="fa-solid fa-camera"></i> CHỤP & QUÉT 478 LANDMARK
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="cv-hair-engine.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

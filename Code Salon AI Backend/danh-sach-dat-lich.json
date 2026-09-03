@@ -1,0 +1,30 @@
+[
+  {
+    "id": "HANA-99440144-563",
+    "name": "Frontend User",
+    "phone": "0971234568",
+    "branch": "Hà Nội - 123 Cầu Giấy",
+    "service": "Combo Cắt & Stylist Thiết Kế Form Tóc",
+    "date": "2026-09-15",
+    "time": "11:30",
+    "stylist": "Alex Nguyễn (Master Balayage)",
+    "price": 250000,
+    "status": "Đã hủy",
+    "createdAt": "2026-08-24T19:24:00.144Z",
+    "updatedAt": "2026-08-24T19:24:00.155Z"
+  },
+  {
+    "id": "HANA-8821",
+    "name": "Nguyễn Thị Minh Anh",
+    "phone": "0988123456",
+    "branch": "Hà Nội - 123 Cầu Giấy",
+    "service": "Nhuộm Thời Trang & Balayage Hàn Quốc",
+    "date": "2026-09-02",
+    "time": "09:30",
+    "stylist": "Alex Nguyễn (Master Balayage)",
+    "price": 950000,
+    "status": "Xác nhận",
+    "createdAt": "2026-08-24T18:35:18.021Z",
+    "updatedAt": "2026-08-24T20:36:53.162Z"
+  }
+]
