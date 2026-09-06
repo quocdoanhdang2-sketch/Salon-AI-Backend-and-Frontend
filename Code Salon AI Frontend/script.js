@@ -1510,9 +1510,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const arSkinToneVal = document.getElementById('arSkinToneVal');
     const arTrackingStatus = document.getElementById('arTrackingStatus');
 
-    // Init CVHairEngine
+    // Init CVHairEngine (có callback hiển thị trạng thái AI Engine lên badge gương 3D)
     if (window.CVHairEngine) {
-        cvEngine = new window.CVHairEngine({ canvas: canvas2dEngine });
+        cvEngine = new window.CVHairEngine({
+            canvas: canvas2dEngine,
+            onStatus: (message) => {
+                if (arTrackingStatus && message) arTrackingStatus.textContent = message;
+            }
+        });
     }
 
     // The old 2D overlay studio is intentionally disabled. The visible flow is
@@ -1536,8 +1541,17 @@ document.addEventListener('DOMContentLoaded', () => {
         list.innerHTML = items.map((item) => `<li>${item}</li>`).join('');
     }
 
+    let lastConsultationKey = '';
+
     function update3dFaceConsultation(metrics) {
         const shape = metrics?.faceShape || 'Oval (Trái Xoan)';
+        const skinTone = metrics?.skinTone || 'Warm Beige';
+
+        // Chỉ cập nhật DOM khi dáng mặt / tone da thay đổi (tránh ghi DOM 60 lần/giây)
+        const consultKey = `${shape}|${skinTone}`;
+        if (consultKey === lastConsultationKey) return;
+        lastConsultationKey = consultKey;
+
         const lower = shape.toLowerCase();
         const shapeKey = lower.includes('tròn') || lower.includes('round') ? 'round'
             : lower.includes('vuông') || lower.includes('square') ? 'square'
@@ -1621,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }[shapeKey];
 
         setText('arFaceShapeVal', `Khuôn mặt: ${shape}`);
-        setText('arSkinToneVal', `Tone da: ${metrics?.skinTone || 'Warm Beige'}`);
+        setText('arSkinToneVal', `Tone da: ${skinTone}`);
         setText('arFaceSummary', adviceMap.summary);
         setAdviceList('arFaceStrengths', adviceMap.strengths);
         setAdviceList('arFaceCautions', adviceMap.cautions);
@@ -1739,6 +1753,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Nút "Chụp ảnh trực tiếp": mở webcam, chụp khung hình rồi đưa vào AI Studio
+    const btnOpenCamera = document.getElementById('btnOpenCamera');
+    let userCameraStream = null;
+
+    function closeCameraCaptureDialog() {
+        if (userCameraStream) {
+            userCameraStream.getTracks().forEach(t => t.stop());
+            userCameraStream = null;
+        }
+        const dialog = document.getElementById('hanaCameraCaptureDialog');
+        if (dialog) dialog.remove();
+    }
+
+    function openCameraCaptureDialog() {
+        if (document.getElementById('hanaCameraCaptureDialog')) return;
+
+        const dialog = document.createElement('div');
+        dialog.id = 'hanaCameraCaptureDialog';
+        dialog.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);';
+        dialog.innerHTML = `
+            <div style="background:#101318;border:1px solid rgba(223,161,50,0.4);border-radius:20px;padding:22px;max-width:640px;width:92%;">
+                <h3 style="color:#dfa132;margin:0 0 14px;font-size:1.05rem;"><i class="fa-solid fa-camera"></i> Chụp ảnh khuôn mặt</h3>
+                <div style="position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:4/3;">
+                    <video id="hanaCaptureVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:16px;justify-content:flex-end;">
+                    <button id="hanaCaptureCancel" class="btn btn-sm" style="padding:10px 18px;border-radius:24px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.2);cursor:pointer;">Hủy</button>
+                    <button id="hanaCaptureSnap" class="btn btn-gold btn-sm" style="padding:10px 22px;border-radius:24px;font-weight:700;background:linear-gradient(135deg,#dfa132,#c5861b);color:#000;border:none;cursor:pointer;"><i class="fa-solid fa-camera"></i> CHỤP ẢNH</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(dialog);
+
+        const video = dialog.querySelector('#hanaCaptureVideo');
+        dialog.querySelector('#hanaCaptureCancel').addEventListener('click', closeCameraCaptureDialog);
+        dialog.addEventListener('click', (e) => { if (e.target === dialog) closeCameraCaptureDialog(); });
+
+        dialog.querySelector('#hanaCaptureSnap').addEventListener('click', () => {
+            if (!video.videoWidth) {
+                showToast('Camera chưa sẵn sàng, vui lòng đợi một nhịp!', 'fa-circle-exclamation');
+                return;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            closeCameraCaptureDialog();
+            handleUserPhoto(dataUrl);
+        });
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false })
+            .then(stream => {
+                userCameraStream = stream;
+                video.srcObject = stream;
+            })
+            .catch(() => {
+                showToast('Không truy cập được camera. Hãy cấp quyền trình duyệt!', 'fa-camera');
+                closeCameraCaptureDialog();
+            });
+    }
+
+    if (btnOpenCamera) btnOpenCamera.addEventListener('click', openCameraCaptureDialog);
+
     // Preset Model Face Cards
     const presetCards = document.querySelectorAll('.ai-preset-card');
     presetCards.forEach(card => {
@@ -1811,14 +1892,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2D Hair Color Palette Chips
+    // 2D Hair Color Palette Chips (map key màu -> mã hex để nhuộm được trên canvas)
+    const HAIR_COLOR_HEX = {
+        original: '#36241b',
+        caramel: '#d79137',
+        chocolate: '#2b1810',
+        honey: '#e4aa4b',
+        moss: '#5a7841',
+        platinum: '#ebf0fa',
+        rose: '#e17396',
+        ash: '#8796a5'
+    };
     const hairColorChips = document.querySelectorAll('#hairColorPalette .color-chip');
     hairColorChips.forEach(chip => {
         chip.addEventListener('click', () => {
             hairColorChips.forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
             const colorKey = chip.getAttribute('data-color') || 'original';
-            if (cvEngine) cvEngine.updateTransform({ color: colorKey });
+            if (cvEngine) cvEngine.updateTransform({ color: HAIR_COLOR_HEX[colorKey] || colorKey });
         });
     });
 
@@ -1886,11 +1977,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const hairKey = activeCard?.getAttribute('data-hair') || cvEngine.currentHairKey || 'layer_nu';
             const hairStyleName = activeCard?.getAttribute('data-name') || 'Mẫu tóc AI Studio';
 
+            // Gửi kèm ảnh tóc tham chiếu (nếu đã nạp) để AI Cloud ghép theo dáng tóc thật
+            let hairReferenceImage = null;
+            if (cvEngine.baseHairImage) {
+                const refCanvas = document.createElement('canvas');
+                refCanvas.width = cvEngine.baseHairImage.naturalWidth || 600;
+                refCanvas.height = cvEngine.baseHairImage.naturalHeight || 600;
+                refCanvas.getContext('2d').drawImage(cvEngine.baseHairImage, 0, 0);
+                hairReferenceImage = refCanvas.toDataURL('image/png');
+            }
+
             try {
                 const result = await apiRequest('/ai/try-on-real', {
                     method: 'POST',
                     body: JSON.stringify({
-                        userImage: cvEngine.toDataURL(),
+                        userImage: cvEngine.toDataURL('image/png'),
+                        hairImage: hairReferenceImage,
                         hairKey,
                         hairStyleName
                     })
@@ -1957,7 +2059,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (cvEngine && cvEngine.init3DMirror) {
-                cvEngine.init3DMirror(ar3dThreeContainer, ar3dVideo, ar3dMeshCanvas);
+                // Nếu engine 3D đã init rồi thì không dựng lại scene (tránh rò rỉ WebGL)
+                if (!(cvEngine.three && cvEngine.three.isInitialized)) {
+                    cvEngine.init3DMirror(ar3dThreeContainer, ar3dVideo, ar3dMeshCanvas);
+                }
             }
 
             arVideoTrackStream = await navigator.mediaDevices.getUserMedia({
@@ -1968,9 +2073,15 @@ document.addEventListener('DOMContentLoaded', () => {
             ar3dVideo.srcObject = arVideoTrackStream;
             await ar3dVideo.play();
 
+            if (ar3dMeshCanvas && ar3dVideo.videoWidth && ar3dVideo.videoHeight) {
+                ar3dMeshCanvas.width = ar3dVideo.videoWidth;
+                ar3dMeshCanvas.height = ar3dVideo.videoHeight;
+            }
+
             if (btnStart3dCamera) btnStart3dCamera.innerHTML = '<i class="fa-solid fa-power-off"></i> TẮT CAMERA 3D';
             showToast('🪞 Gương soi 3D AR WebGL đã bật thành công!', 'fa-vr-cardboard');
 
+            let lastTrackStatus = '';
             async function trackFrame() {
                 if (ar3dVideo && ar3dVideo.readyState >= 2 && cvEngine) {
                     try {
@@ -1978,8 +2089,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (landmarks) {
                             cvEngine.update3DPose(landmarks, ar3dVideo.videoWidth, ar3dVideo.videoHeight);
                             update3dFaceConsultation(cvEngine.faceMetrics);
-                            if (arTrackingStatus) {
-                                arTrackingStatus.textContent = `Live 3D Tracking (${cvEngine.faceMetrics.faceShape})`;
+                            const statusText = `Live 3D Tracking (${cvEngine.faceMetrics.faceShape})`;
+                            if (arTrackingStatus && statusText !== lastTrackStatus) {
+                                arTrackingStatus.textContent = statusText;
+                                lastTrackStatus = statusText;
                             }
                         }
                     } catch (e) {}
@@ -2008,7 +2121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             arPresetBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const hair3d = btn.getAttribute('data-hair3d') || 'sidepart_nam_3d';
+            const hair3d = btn.getAttribute('data-hair3d') || 'curly_nu_3d';
             
             if (cvEngine) {
                 cvEngine.three.current3dStyle = hair3d;
@@ -2071,45 +2184,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // 13. CHỤP ẢNH GƯƠNG 3D AR & STUDIO KẾT QUẢ VỚI TẢI ẢNH, ĐẶT LỊCH & THOÁT NHANH
     // =========================================================================
     let snapBaseFaceDataUrl = null;
-    let snapCurrentHairKey = 'layer_nu_3d';
-    let snapCurrentHairName = 'Layer Nữ Cúp Ngọn 3D';
-    let snapCurrentColorName = 'Nâu Tự Nhiên';
+    let snapCurrentHairKey = 'curly_nu_3d';
+    let snapCurrentHairName = 'TÓC XOĂN DÀI';
+    let snapCurrentColorName = 'Nâu Socola';
 
     const snapshotHairstyleData = {
-        layer_nu_3d: {
-            name: 'Layer Nữ Cúp Ngọn Hàn Quốc 3D',
-            match: '98% Phù Hợp',
-            pros: 'Tạo độ bay bổng tự nhiên, che khuyết điểm gò má to và giúp khuôn mặt thon gọn chuẩn V-line.',
-            cons: 'Nên sấy cúp đuôi nhẹ sau khi gội để duy trì độ phồng mềm mại.',
-            advice: 'Rất hợp nhuộm tông Nâu Caramel, Nâu Hạt Dẻ hoặc Highlight Balayage.'
+        layer_nam_3d: {
+            name: 'TÓC LAYER NGẮN VUỐT RỦ',
+            match: '96% PHÙ HỢP',
+            pros: 'Từng lớp tóc ngắn vuốt rủ tạo vẻ trẻ trung, gọn gàng và che trán hiệu quả.',
+            cons: 'Cần sấy nâng chân tóc và dùng sáp nhẹ để giữ phom vuốt rủ.',
+            advice: 'Hợp màu NÂU HẠT DẺ, NÂU SOCOLA hoặc ĐEN TỰ NHIÊN.'
         },
-        wave_nu_3d: {
-            name: 'Sóng Lơi Bồng Bềnh Hàn Quốc 3D',
-            match: '96% Phù Hợp',
-            pros: 'Lọn xoăn sóng nước mềm mại làm mềm các góc cạnh khuôn mặt, tạo nét thanh lịch nữ tính.',
-            cons: 'Cần dùng kem dưỡng giữ nếp và sấy bằng loa khuếch tán.',
-            advice: 'Tôn da tối đa khi kết hợp màu Nâu Mật Ong hoặc Nâu Rêu Khói.'
+        middlepart_nam_3d: {
+            name: 'TÓC NAM NGẮN RẼ NGÔI GIỮA',
+            match: '96% PHÙ HỢP',
+            pros: 'Đường rẽ ngôi giữa tạo vẻ gọn gàng, cân đối và hiện đại cho khuôn mặt nam.',
+            cons: 'Cần sấy phồng chân tóc và giữ nếp nhẹ để đường ngôi không bị xẹp.',
+            advice: 'Hợp màu NÂU TỰ NHIÊN, NÂU SOCOLA hoặc ĐEN TỰ NHIÊN.'
         },
         bob_nu_3d: {
-            name: 'Bob Ngắn Cá Tính Balayage 3D',
-            match: '94% Phù Hợp',
-            pros: 'Tôn trọn đường xương quai hàm và cổ thon, mang lại vẻ ngoài năng động, thời thượng.',
-            cons: 'Cần cắt tỉa định kỳ 4-6 tuần để giữ form dáng chuẩn xác.',
-            advice: 'Nhuộm Balayage Xám Khói hoặc Nâu Socola ánh đồng cực kỳ nổi bật.'
+            name: 'TÓC BOB NGẮN UỐN CỤP ĐUÔI',
+            match: '94% PHÙ HỢP',
+            pros: 'Phần đuôi cụp ôm nhẹ khuôn mặt, tạo vẻ gọn gàng, trẻ trung và thời thượng.',
+            cons: 'Cần sấy hoặc cuốn nhẹ phần đuôi để giữ độ cụp ổn định.',
+            advice: 'Hợp màu NÂU SOCOLA, NÂU CARAMEL hoặc BALAYAGE.'
         },
-        wolf_cut_3d: {
-            name: 'Wolf Cut / Shag Thời Thượng 3D',
-            match: '95% Phù Hợp',
-            pros: 'Tầng layer gai nhẹ tạo độ phồng đỉnh đầu, che trán rộng và hàm vuông rất hiệu quả.',
-            cons: 'Cần chút sáp hoặc gel tạo nếp tự nhiên khi ra ngoài.',
-            advice: 'Hợp với màu Nhuộm Xám Khói, Hồng Pastel hoặc Nâu Rêu phá cách.'
-        },
-        sidepart_nam_3d: {
-            name: 'Side Part 7/3 Lịch Lãm Nam 3D',
-            match: '97% Phù Hợp',
-            pros: 'Đường rẽ ngôi tỷ lệ 7/3 tạo chiều sâu, làm gương mặt nam tính, cân đối và chuẩn quý ông.',
-            cons: 'Cần dùng sấy định hình form tóc và sáp vuốt giữ nếp.',
-            advice: 'Nhuộm Nâu Tự Nhiên hoặc Nâu Socola mang lại phong thái sang trọng.'
+        curly_nu_3d: {
+            name: 'TÓC XOĂN DÀI',
+            match: '95% PHÙ HỢP',
+            pros: 'Độ xoăn dài tạo độ phồng mềm mại, giúp khuôn mặt cân đối và nữ tính hơn.',
+            cons: 'Cần dưỡng ẩm và sấy bằng loa khuếch tán để giữ lọn xoăn.',
+            advice: 'Hợp màu NÂU MẬT ONG, NÂU CARAMEL hoặc NÂU RÊU.'
         },
         layer_nam_3d: {
             name: 'Layer Nam Textured Crop 3D',
@@ -2118,19 +2224,19 @@ document.addEventListener('DOMContentLoaded', () => {
             cons: 'Cần sấy nâng chân tóc để tránh bị bết xẹp.',
             advice: 'Kết hợp uốn texture nhẹ và màu Nâu Hạt Dẻ hoặc Xám Khói.'
         },
-        undercut_nam_3d: {
-            name: 'Undercut Pompadour Vuốt Cao 3D',
-            match: '95% Phù Hợp',
-            pros: 'Hai bên tông đơ gọn gàng tôn trọn đường nét gương mặt góc cạnh và chiều cao.',
-            cons: 'Cần dùng sáp clay giữ nếp và sấy ngược đỉnh đầu.',
-            advice: 'Nhuộm màu Xám Khói hoặc Nâu Hạt Dẻ ánh khói rất nam tính.'
+        hime_cut_nu_3d: {
+            name: 'TÓC HIME',
+            match: '95% PHÙ HỢP',
+            pros: 'Hai tầng tóc đặc trưng ôm khuôn mặt, tạo vẻ cá tính và làm nổi bật đường nét gò má.',
+            cons: 'Cần tỉa lại phần mai định kỳ để giữ đường cắt sắc nét.',
+            advice: 'Hợp màu ĐEN TỰ NHIÊN, NÂU SOCOLA hoặc ĐỎ RƯỢU.'
         },
-        pixie_nu_3d: {
-            name: 'Pixie Cut Hiện Đại Nữ 3D',
-            match: '93% Phù Hợp',
-            pros: 'Khoe trọn nét đẹp gò má và đôi mắt, tạo diện mạo sắc sảo, tự tin và quyến rũ.',
-            cons: 'Cần cắt tỉa nếp thường xuyên mỗi tháng.',
-            advice: 'Cực kỳ cá tính với màu Bạch Kim, Xám Khói hoặc Hồng Khói.'
+        straight_middlepart_nu_3d: {
+            name: 'TÓC RẼ NGÔI GIỮA UỐN SÓNG',
+            match: '93% PHÙ HỢP',
+            pros: 'Ngôi giữa kết hợp sóng mềm tạo vẻ thanh lịch, bồng bềnh và cân bằng khuôn mặt.',
+            cons: 'Nên dưỡng tóc và sấy định hình để sóng không bị duỗi nhanh.',
+            advice: 'Hợp màu NÂU CARAMEL, NÂU HẠT DẺ hoặc XÁM KHÓI.'
         }
     };
 
@@ -2167,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Lấy thông tin kiểu tóc 3D và màu nhuộm đang chọn trên gương
             const active3dBtn = document.querySelector('.ar-preset-btn.active');
             if (active3dBtn) {
-                snapCurrentHairKey = active3dBtn.getAttribute('data-hair3d') || 'layer_nu_3d';
+                snapCurrentHairKey = active3dBtn.getAttribute('data-hair3d') || 'layer_nam_3d';
                 snapCurrentHairName = active3dBtn.textContent.trim();
             }
 
@@ -2198,7 +2304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             snapBaseFaceDataUrl = compositeDataUrl;
 
             // 3. Cập nhật thông tin nhận xét & ưu nhược điểm lên bảng bên phải
-            const info = snapshotHairstyleData[snapCurrentHairKey] || snapshotHairstyleData['layer_nu_3d'];
+            const info = snapshotHairstyleData[snapCurrentHairKey] || snapshotHairstyleData['layer_nam_3d'];
             const hairNameEl = document.getElementById('aiSnapHairName');
             const colorNameEl = document.getElementById('aiSnapColorName');
             const matchEl = document.getElementById('aiSnapMatchVal');

@@ -10,9 +10,14 @@ class CVHairEngine {
         this.canvas = options.canvas || document.getElementById('aiTryOnCanvasEngine');
         this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
 
+        // Callback báo trạng thái AI Engine ra UI (tùy chọn)
+        this.onStatus = typeof options.onStatus === 'function' ? options.onStatus : null;
+
         // MediaPipe FaceLandmarker Instance
         this.faceLandmarker = null;
         this.isLandmarkerReady = false;
+        this.landmarkerInitPromise = null;
+        this.lastVideoTimestamp = -1;
 
         // 2D State
         this.userImage = null;
@@ -64,12 +69,21 @@ class CVHairEngine {
             hairGroup: null,
             targetPos: null,
             hairMaterial: null,
-            current3dStyle: 'sidepart_nam_3d',
+            current3dStyle: 'curly_nu_3d',
             currentColorHex: '#4b2d22',
             userOffsetY: 0,
             userScale: 1.0,
+            modelOffsets: {
+                middlepart_nam_3d: { x: 0, y: 0.10, z: -0.14, scale: 1.02 },
+                curly_nu_3d: { x: 0, y: 0.10, z: -0.20, scale: 1.06 },
+                bob_nu_3d: { x: 0, y: 0.06, z: -0.12, scale: 1.02 },
+                hime_cut_nu_3d: { x: 0, y: 0.08, z: -0.18, scale: 1.06 },
+                straight_middlepart_nu_3d: { x: 0, y: 0.12, z: -0.22, scale: 1.08 },
+                layer_nam_3d: { x: 0, y: 0.08, z: -0.12, scale: 1.02 }
+            },
             isInitialized: false,
-            animFrameId: null
+            animFrameId: null,
+            modelLoadVersion: 0
         };
 
         // Hair Library Preset Meta Data (Pros & Cons Analysis)
@@ -177,56 +191,129 @@ class CVHairEngine {
         this.initMediaPipe();
     }
 
+    emitStatus(message) {
+        if (this.onStatus) this.onStatus(message);
+        if (message) console.info('[CVHairEngine]', message);
+    }
+
     /**
-     * Tải MediaPipe Tasks Vision (478 Điểm 3D)
+     * Chèn script MediaPipe từ CDN dự phòng nếu window.Vision chưa tồn tại.
+     * Version được PIN cứng (1.0.1) vì các version cũ 0.10.x đã bị gỡ vision_bundle.js khỏi CDN.
+     */
+    loadVisionBundleScript() {
+        return new Promise((resolve, reject) => {
+            const candidates = [
+                'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.js',
+                'https://unpkg.com/@mediapipe/tasks-vision@1.0.1/vision_bundle.js',
+                'https://unpkg.com/@mediapipe/tasks-vision/vision_bundle.js'
+            ];
+            let index = 0;
+            const tryNext = () => {
+                if (index >= candidates.length) {
+                    reject(new Error('Không tải được MediaPipe Vision từ mọi CDN'));
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = candidates[index++];
+                script.crossOrigin = 'anonymous';
+                script.onload = () => resolve();
+                script.onerror = () => {
+                    script.remove();
+                    tryNext();
+                };
+                document.head.appendChild(script);
+            };
+            tryNext();
+        });
+    }
+
+    /**
+     * Tải MediaPipe Tasks Vision (478 Điểm 3D) - bản bền vững, có retry & fallback CDN
      */
     async initMediaPipe() {
-        try {
-            const vision = window.Vision || window.vision || (window.FilesetResolver && window.FaceLandmarker ? window : null);
-            if (vision && vision.FaceLandmarker) {
-                await this.setupLandmarker(vision);
-                return;
-            }
+        if (this.landmarkerInitPromise) return this.landmarkerInitPromise;
 
-            let attempts = 0;
-            const checkInterval = setInterval(async () => {
-                attempts++;
-                const v = window.Vision || window.vision || (window.FilesetResolver && window.FaceLandmarker ? window : null);
-                if (v && v.FaceLandmarker) {
-                    clearInterval(checkInterval);
-                    await this.setupLandmarker(v);
-                } else if (attempts > 30) {
-                    clearInterval(checkInterval);
+        this.landmarkerInitPromise = (async () => {
+            try {
+                this.emitStatus('Đang tải AI Engine (MediaPipe 478 Landmark)...');
+
+                // Đợi script vision_bundle (nạp sẵn trong HTML hoặc tự chèn dự phòng)
+                let vision = window.Vision || window.vision;
+                if (!vision || !vision.FaceLandmarker) {
+                    try {
+                        await this.loadVisionBundleScript();
+                    } catch (e) { /* tiếp tục thử với những gì có */ }
+                    vision = window.Vision || window.vision;
                 }
-            }, 150);
-        } catch (err) {
-            console.error('Lỗi khởi tạo MediaPipe:', err);
-        }
+
+                if (!vision || !vision.FilesetResolver || !vision.FaceLandmarker) {
+                    this.emitStatus('Lỗi: không tải được thư viện AI. Kiểm tra kết nối mạng rồi tải lại trang.');
+                    return false;
+                }
+
+                await this.setupLandmarker(vision);
+                if (this.isLandmarkerReady) {
+                    this.emitStatus('AI Engine sẵn sàng (478 Landmark 3D)');
+                }
+                return this.isLandmarkerReady;
+            } catch (err) {
+                console.error('Lỗi khởi tạo MediaPipe:', err);
+                this.emitStatus('Lỗi khởi tạo AI Engine: ' + (err.message || err));
+                return false;
+            }
+        })();
+
+        return this.landmarkerInitPromise;
     }
 
     async setupLandmarker(vision) {
-        const cdnWasm = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm';
+        // PIN đúng version wasm khớp với vision_bundle 1.0.1, có CDN dự phòng
+        const wasmCandidates = [
+            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm',
+            'https://unpkg.com/@mediapipe/tasks-vision@1.0.1/wasm'
+        ];
         const modelUrl = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 
-        try {
-            const filesetResolver = await vision.FilesetResolver.forVisionTasks(cdnWasm);
-            this.faceLandmarker = await vision.FaceLandmarker.createFromOptions(filesetResolver, {
-                baseOptions: { modelAssetPath: modelUrl, delegate: 'GPU' },
-                runningMode: 'VIDEO',
-                numFaces: 1
-            });
-            this.isLandmarkerReady = true;
-        } catch (error) {
-            try {
-                const filesetResolver = await vision.FilesetResolver.forVisionTasks(cdnWasm);
-                this.faceLandmarker = await vision.FaceLandmarker.createFromOptions(filesetResolver, {
-                    baseOptions: { modelAssetPath: modelUrl },
-                    runningMode: 'VIDEO',
-                    numFaces: 1
-                });
-                this.isLandmarkerReady = true;
-            } catch (e) { }
+        for (const cdnWasm of wasmCandidates) {
+            for (const delegate of ['GPU', 'CPU']) {
+                try {
+                    const filesetResolver = await vision.FilesetResolver.forVisionTasks(cdnWasm);
+                    this.faceLandmarker = await vision.FaceLandmarker.createFromOptions(filesetResolver, {
+                        baseOptions: { modelAssetPath: modelUrl, delegate },
+                        runningMode: 'VIDEO',
+                        numFaces: 1
+                    });
+                    this.isLandmarkerReady = true;
+                    return;
+                } catch (error) {
+                    console.warn(`FaceLandmarker khởi tạo lỗi (wasm=${cdnWasm}, delegate=${delegate}):`, error.message || error);
+                }
+            }
         }
+        this.isLandmarkerReady = false;
+    }
+
+    /**
+     * Dò mặt trên ảnh TĨNH.
+     * FaceLandmarker được tạo ở chế độ VIDEO nên bắt buộc dùng detectForVideo
+     * (detect() kiểu IMAGE sẽ ném lỗi trên landmarker chế độ VIDEO) với timestamp tăng dần.
+     */
+    detectImage(imageEl) {
+        if (!this.faceLandmarker || !this.isLandmarkerReady || !imageEl) return null;
+
+        let ts = performance.now();
+        if (ts <= this.lastVideoTimestamp) ts = this.lastVideoTimestamp + 1;
+        this.lastVideoTimestamp = ts;
+
+        try {
+            if (typeof this.faceLandmarker.detectForVideo === 'function') {
+                const results = this.faceLandmarker.detectForVideo(imageEl, ts);
+                return (results && results.faceLandmarks && results.faceLandmarks.length > 0) ? results.faceLandmarks[0] : null;
+            }
+        } catch (e) {
+            console.warn('detectImage warning:', e.message || e);
+        }
+        return null;
     }
 
     /**
@@ -243,18 +330,17 @@ class CVHairEngine {
                     this.canvas.height = img.naturalHeight || 800;
                 }
 
-                // Chạy MediaPipe Face Landmark Detection
-                if (this.faceLandmarker && this.isLandmarkerReady) {
-                    try {
-                        const results = typeof this.faceLandmarker.detect === 'function'
-                            ? this.faceLandmarker.detect(img)
-                            : (typeof this.faceLandmarker.detectForVideo === 'function' ? this.faceLandmarker.detectForVideo(img, performance.now()) : null);
-                        if (results && results.faceLandmarks && results.faceLandmarks.length > 0) {
-                            this.landmarks = results.faceLandmarks[0];
-                            this.calculateFaceMetrics(img.naturalWidth, img.naturalHeight);
-                        }
-                    } catch (e) {
-                        console.warn('Face landmarking warning:', e);
+                // Đảm bảo AI Engine đã init xong trước khi dò landmark ảnh tĩnh
+                if (!this.isLandmarkerReady) {
+                    await this.initMediaPipe();
+                }
+
+                // Chạy MediaPipe Face Landmark Detection (VIDEO-mode landmarker => detectForVideo)
+                if (this.isLandmarkerReady) {
+                    const lm = this.detectImage(img);
+                    if (lm && lm.length >= 454) {
+                        this.landmarks = lm;
+                        this.calculateFaceMetrics(img.naturalWidth, img.naturalHeight);
                     }
                 }
 
@@ -359,9 +445,13 @@ class CVHairEngine {
 
     /**
      * Hàm nhuộm màu cho ảnh tóc gốc (Base Image)
+     * Giữ nguyên ảnh gốc khi chọn 'original' (tránh multiply ra màu đen).
      */
     tintHairImage(baseImage, hexColor) {
         if (!baseImage) return null;
+        if (!hexColor || !String(hexColor).startsWith('#')) {
+            return baseImage; // màu 'original' hoặc không hợp lệ => dùng ảnh gốc
+        }
         const canvas = document.createElement('canvas');
         canvas.width = baseImage.naturalWidth || baseImage.width || 500;
         canvas.height = baseImage.naturalHeight || baseImage.height || 500;
@@ -500,25 +590,31 @@ class CVHairEngine {
     drawHairOverlay(ctx, width, height) {
         if (!this.hairImage) return;
 
+        // Ảnh tóc chuẩn 600x600, mốc tóc trán (hairline) nằm ở 52% chiều cao ảnh
+        const HAIR_BOX = 600;
+        const HAIRLINE_RATIO = 0.52;
+
         ctx.save();
         ctx.globalAlpha = this.transform.opacity;
 
         let posX = width / 2 + this.transform.offsetX;
-        let posY = height * 0.28 + this.transform.offsetY;
-        let scale = (width * 0.85 / 500) * this.transform.scale;
+        let posY = height * 0.28 + this.transform.offsetY + HAIR_BOX * 0.05;
+        let scale = (width * 0.85 / HAIR_BOX) * this.transform.scale;
         let angle = this.transform.rotation;
 
         if (this.faceMetrics && this.faceMetrics.foreheadX) {
+            // Neo đúng điểm tóc trán (landmark 10) và phủ rộng hơn khuôn mặt ~2 lần bề ngang
             posX = this.faceMetrics.foreheadX + this.transform.offsetX;
-            posY = this.faceMetrics.foreheadY - (this.faceMetrics.faceHeight * 0.25) + this.transform.offsetY;
-            scale = (this.faceMetrics.faceWidth * 1.6 / 500) * this.transform.scale;
+            posY = this.faceMetrics.foreheadY + this.transform.offsetY;
+            scale = (this.faceMetrics.faceWidth * 2.5 / HAIR_BOX) * this.transform.scale;
             angle += this.faceMetrics.angle;
         }
 
         ctx.translate(posX, posY);
         ctx.rotate((angle * Math.PI) / 180);
         ctx.scale(scale, scale);
-        ctx.drawImage(this.hairImage, -250, -150, 500, 500);
+        // Vẽ ảnh tóc sao cho điểm hairline (52% chiều cao) trùng đúng vị trí mốc trán
+        ctx.drawImage(this.hairImage, -HAIR_BOX / 2, -HAIR_BOX * HAIRLINE_RATIO, HAIR_BOX, HAIR_BOX);
 
         ctx.restore();
     }
@@ -533,7 +629,11 @@ class CVHairEngine {
     detectFrame(videoEl) {
         if (!videoEl || videoEl.readyState < 2 || !this.faceLandmarker || !this.isLandmarkerReady) return null;
         try {
-            const timestampMs = performance.now();
+            // MediaPipe yêu cầu timestamp tăng dần nghiêm ngặt giữa các lần detect
+            let timestampMs = performance.now();
+            if (timestampMs <= this.lastVideoTimestamp) timestampMs = this.lastVideoTimestamp + 1;
+            this.lastVideoTimestamp = timestampMs;
+
             let results = null;
             if (typeof this.faceLandmarker.detectForVideo === 'function') {
                 results = this.faceLandmarker.detectForVideo(videoEl, timestampMs);
@@ -756,6 +856,8 @@ class CVHairEngine {
         this.three.current3dStyle = styleKey;
         if (!this.three.isInitialized || !this.three.hairGroup) return;
         const hairGroup = this.three.hairGroup;
+        const loadVersion = ++this.three.modelLoadVersion;
+        hairGroup.visible = false;
 
         // Xóa rác 3D cũ
         while (hairGroup.children.length > 0) {
@@ -770,9 +872,10 @@ class CVHairEngine {
 
         if (!this.three.gltfLoader) return;
 
-        // Trỏ tới file 3D (VD: assets/models/sidepart_nam_3d.glb)
+        // Trỏ tới file 3D trong assets/models.
         const modelKey = styleKey.endsWith('_3d') ? styleKey : (styleKey + '_3d');
         const modelUrl = `assets/models/${modelKey}.glb`;
+        const modelOffset = this.three.modelOffsets[modelKey] || { x: 0, y: 0.10, z: -0.12, scale: 1.0 };
 
         // Nếu model đã được tính toán trong Cache, lấy ra dùng luôn
         if (this.three.loadedModels && this.three.loadedModels[modelKey]) {
@@ -783,6 +886,7 @@ class CVHairEngine {
                 }
             });
             hairGroup.add(cachedPivot);
+            if (loadVersion === this.three.modelLoadVersion) hairGroup.visible = true;
             return;
         }
 
@@ -804,9 +908,9 @@ class CVHairEngine {
             box.getCenter(center);
 
             // Dịch chuyển tâm hình học của tóc về gốc (0, 0, 0)
-            hairMesh.position.x = -center.x;
-            hairMesh.position.y = -center.y + (size.y * 0.12);
-            hairMesh.position.z = -center.z - (size.z * 0.05);
+            hairMesh.position.x = -center.x + modelOffset.x;
+            hairMesh.position.y = -center.y + (size.y * 0.12) + modelOffset.y;
+            hairMesh.position.z = -center.z - (size.z * 0.05) + modelOffset.z;
 
             // Chuẩn hóa kích thước tóc theo tỷ lệ khuôn mặt (khoảng 3.2 units)
             const targetWidth = 3.2;
@@ -815,14 +919,15 @@ class CVHairEngine {
 
             const modelPivot = new THREE.Group();
             modelPivot.add(hairMesh);
-            modelPivot.scale.set(normScale, normScale, normScale);
+            modelPivot.scale.set(normScale * modelOffset.scale, normScale * modelOffset.scale, normScale * modelOffset.scale);
 
             if (!this.three.loadedModels) this.three.loadedModels = {};
             this.three.loadedModels[modelKey] = modelPivot;
 
-            if (this.three.current3dStyle === styleKey) {
+            if (loadVersion === this.three.modelLoadVersion && this.three.current3dStyle === styleKey) {
                 while (hairGroup.children.length > 0) hairGroup.remove(hairGroup.children[0]);
                 hairGroup.add(modelPivot.clone());
+                hairGroup.visible = true;
             }
         }, undefined, (error) => {
             console.warn('Không tìm thấy file mô hình 3D:', modelUrl);
@@ -901,28 +1006,41 @@ class CVHairEngine {
         const leftTemple = landmarks[234];
         const rightTemple = landmarks[454];
 
-        const posX = (0.5 - forehead.x) * vWidth;
-        const posY = (0.5 - forehead.y) * vHeight + 0.35 + (this.three.userOffsetY || 0);
-        const posZ = (forehead.z || 0) * -6.0 - 0.25;
+        // Điểm tóc trán & chiều cao mặt trong hệ tọa độ world (tự co giãn theo khoảng cách camera)
+        const foreheadWx = (0.5 - forehead.x) * vWidth;
+        const foreheadWy = (0.5 - forehead.y) * vHeight;
+        const foreheadWz = (forehead.z || 0) * -6.0;
+        const chinWy = (0.5 - chin.y) * vHeight;
+
+        // Tâm tóc = điểm trán kéo lên trên bằng 55% chiều cao mặt (khớp giải phẫu đầu người)
+        const faceHeightW = Math.abs(foreheadWy - chinWy);
+        const posX = foreheadWx;
+        const posY = foreheadWy + faceHeightW * 0.42 + (this.three.userOffsetY || 0);
+        const posZ = foreheadWz - 0.25;
 
         this.three.targetPos.set(posX, posY, posZ);
-        this.three.hairGroup.position.lerp(this.three.targetPos, 0.40);
-        this.three.hairGroup.visible = true;
+        this.three.hairGroup.position.lerp(this.three.targetPos, 0.62);
+        this.three.hairGroup.visible = this.three.hairGroup.children.length > 0;
 
+        // Roll: nghiêng ngang theo đường nối hai thái dương
         const eyeDx = rightTemple.x - leftTemple.x;
         const eyeDy = rightTemple.y - leftTemple.y;
         const rollAngle = -Math.atan2(eyeDy, eyeDx);
 
-        const yawAngle = (rightTemple.z - leftTemple.z) * 4.5;
-        const pitchAngle = (chin.y - forehead.y - 0.35) * 2.5;
+        // Yaw: quay trái/phải theo chênh lệch độ sâu hai thái dương (kẹp trong ±75°)
+        const yawAngle = Math.max(-1.3, Math.min(1.3, (rightTemple.z - leftTemple.z) * 4.5));
 
-        this.three.hairGroup.rotation.x += (pitchAngle - this.three.hairGroup.rotation.x) * 0.35;
-        this.three.hairGroup.rotation.y += (-yawAngle - this.three.hairGroup.rotation.y) * 0.35;
-        this.three.hairGroup.rotation.z += (rollAngle - this.three.hairGroup.rotation.z) * 0.35;
+        // Pitch: gật/cúi theo chênh lệch độ sâu trán - cằm (kẹp trong ±45°)
+        const pitchAngle = Math.max(-0.8, Math.min(0.8, ((forehead.z || 0) - (chin.z || 0)) * 3.0));
+
+        this.three.hairGroup.rotation.x += (pitchAngle - this.three.hairGroup.rotation.x) * 0.55;
+        this.three.hairGroup.rotation.y += (-yawAngle - this.three.hairGroup.rotation.y) * 0.55;
+        this.three.hairGroup.rotation.z += (rollAngle - this.three.hairGroup.rotation.z) * 0.55;
 
         const faceWidth3D = Math.hypot(rightTemple.x - leftTemple.x, rightTemple.y - leftTemple.y);
-        const scaleFactor = Math.max(0.75, Math.min(2.2, faceWidth3D * 3.5)) * (this.three.userScale || 1.0);
-        this.three.hairGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        const scaleFactor = Math.max(0.75, Math.min(2.2, faceWidth3D * 3.5))
+            * (this.three.userScale || 1.0);
+        this.three.hairGroup.scale.lerp(new THREE.Vector3(scaleFactor, scaleFactor, scaleFactor), 0.4);
 
         if (this.three.meshCtx && this.three.meshCanvas) {
             const ctx = this.three.meshCtx;
@@ -933,11 +1051,42 @@ class CVHairEngine {
     }
 
     /**
+     * Vẽ overlay tóc 2D lên ảnh chụp GƯƠNG (đã lật mirror).
+     * Landmark thuộc hệ tọa độ video gốc nên phải lật X + đảo góc quay.
+     */
+    drawHairOverlayMirrored(ctx, vW, vH) {
+        if (!this.hairImage || !this.faceMetrics || !this.faceMetrics.foreheadX) return;
+
+        const HAIR_BOX = 600;
+        const HAIRLINE_RATIO = 0.52;
+
+        ctx.save();
+        ctx.globalAlpha = this.transform.opacity;
+        ctx.translate(vW - this.faceMetrics.foreheadX, this.faceMetrics.foreheadY);
+        ctx.rotate((-this.faceMetrics.angle * Math.PI) / 180);
+        const scale = (this.faceMetrics.faceWidth * 2.5 / HAIR_BOX) * this.transform.scale;
+        ctx.scale(scale, scale);
+        ctx.drawImage(this.hairImage, -HAIR_BOX / 2, -HAIR_BOX * HAIRLINE_RATIO, HAIR_BOX, HAIR_BOX);
+        ctx.restore();
+    }
+
+    /**
      * CHỤP ẢNH GƯƠNG 3D COMPOSITE (KHUÔN MẶT THẬT + TÓC 3D VÀ MÀU NHUỘM ĐANG THỬ)
+     * - Đồng bộ pose lần cuối ngay trước khi chụp để tóc không bị trễ frame.
+     * - Nếu tóc 3D chưa kịp hiển thị (model load chậm/mất tracking), tự động
+     *   ghép tóc 2D chân thực lên ảnh chụp theo landmark đã lưu => LUÔN có tóc trong ảnh.
      */
     capture3DComposite(videoEl) {
         if (!videoEl || !this.three.renderer || !this.three.scene || !this.three.camera) {
             return null;
+        }
+
+        // 0. Đồng bộ pose lần cuối với frame mới nhất (tránh tóc trễ/lệch lúc chụp)
+        if (this.faceLandmarker && this.isLandmarkerReady && videoEl.readyState >= 2) {
+            const lm = this.detectFrame(videoEl);
+            if (lm) {
+                this.update3DPose(lm, videoEl.videoWidth, videoEl.videoHeight);
+            }
         }
 
         const vW = videoEl.videoWidth || 1280;
@@ -946,7 +1095,9 @@ class CVHairEngine {
         const outCanvas = document.createElement('canvas');
         outCanvas.width = vW;
         outCanvas.height = vH;
-        const ctx = outCanvas.getContext('2d');
+        const ctx = outCanvas.getContext('2d', { alpha: false });
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
         // 1. Vẽ video người dùng từ camera (được lật mirror khớp với gương soi)
         ctx.save();
@@ -955,9 +1106,32 @@ class CVHairEngine {
         ctx.drawImage(videoEl, 0, 0, vW, vH);
         ctx.restore();
 
-        // 2. Render Three.js WebGL scene đồng bộ và vẽ đè lên canvas
-        this.three.renderer.render(this.three.scene, this.three.camera);
-        ctx.drawImage(this.three.renderer.domElement, 0, 0, vW, vH);
+        // Render đúng tỉ lệ video và đúng kích thước pixel ảnh chụp, không kéo méo canvas.
+        const renderer = this.three.renderer;
+        const camera = this.three.camera;
+        const previousAspect = camera.aspect;
+        const previousPixelRatio = renderer.getPixelRatio();
+        const previousWidth = renderer.domElement.width;
+        const previousHeight = renderer.domElement.height;
+
+        camera.aspect = vW / vH;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(1);
+        renderer.setSize(vW, vH, false);
+        renderer.render(this.three.scene, camera);
+        ctx.drawImage(renderer.domElement, 0, 0, renderer.domElement.width, renderer.domElement.height, 0, 0, vW, vH);
+
+        camera.aspect = previousAspect;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(previousPixelRatio);
+        renderer.setSize(previousWidth / previousPixelRatio, previousHeight / previousPixelRatio, false);
+
+        // 3. FALLBACK AN TOÀN: nếu tóc 3D không hiển thị (model chưa load / mất tracking),
+        //    ghép trực tiếp ảnh tóc 2D theo landmark lên ảnh chụp => ảnh chụp luôn có kiểu tóc.
+        const hair3dVisible = this.three.hairGroup && this.three.hairGroup.visible && this.three.hairGroup.children.length > 0;
+        if (!hair3dVisible) {
+            this.drawHairOverlayMirrored(ctx, vW, vH);
+        }
 
         return outCanvas.toDataURL('image/jpeg', 0.96);
     }

@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Start HANA Salon (Backend + Chrome)",
+            "program": "${workspaceFolder}/Code Salon AI Backend/server.js",
+            "cwd": "${workspaceFolder}/Code Salon AI Backend",
+            "envFile": "${workspaceFolder}/Code Salon AI Backend/.env",
+            "console": "integratedTerminal",
+            "serverReadyAction": {
+                "pattern": "Server Hana Hair đang chạy tại: http://localhost:(\\d+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "debugWithChrome"
+            }
+        }
+    ]
+}

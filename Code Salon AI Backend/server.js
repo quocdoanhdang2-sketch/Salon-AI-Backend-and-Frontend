@@ -43,7 +43,8 @@ app.post('/api/ai/analyze', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu ảnh.' });
         }
 
-        const response = await fetch('http://localhost:8001/analyze-face', {
+        const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+        const response = await fetch(`${aiServiceUrl}/analyze-face`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ imageBase64, filename })
@@ -67,72 +68,96 @@ app.post('/api/ai/analyze', async (req, res) => {
 /**
  * ============================================================================
  * REAL AI HAIR TRY-ON ENDPOINT (HairFastGAN / Replicate Cloud API Pipeline)
+ * ----------------------------------------------------------------------------
+ * - Gửi ảnh khách + ảnh tóc tham chiếu theo đúng schema HairFastGAN
+ *   (face_image + hair_image1..3). Model/version có thể thay qua env
+ *   REPLICATE_MODEL_VERSION mà không cần sửa code.
+ * - Kết quả trả về luôn là dataURL (base64) để canvas ghép không bị taint.
  * ============================================================================
  */
+const REPLICATE_HAIRFAST_VERSION = process.env.REPLICATE_MODEL_VERSION
+    || 'a687353f86e5898696d747a8f895c256037e44a36f6424e64f7fa8b7d903673c';
+
+async function fetchAsDataUrl(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Tải ảnh kết quả lỗi HTTP ${res.status}`);
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get('content-type') || 'image/png';
+    return `data:${contentType};base64,${buffer.toString('base64')}`;
+}
+
 app.post('/api/ai/try-on-real', async (req, res) => {
     try {
-        const { userImage, hairKey, hairStyleName } = req.body || {};
+        const { userImage, hairImage, hairKey, hairStyleName } = req.body || {};
         if (!userImage) {
             return res.status(400).json({ success: false, message: 'Thiếu dữ liệu ảnh khuôn mặt người dùng.' });
         }
 
         const replicateToken = process.env.REPLICATE_API_TOKEN;
 
-        // Nếu đã cấu hình REPLICATE_API_TOKEN trong file .env
         if (replicateToken) {
             try {
                 console.log('🤖 Đang kết nối Replicate AI HairFastGAN Service...');
-                // Gọi Replicate API HairFastGAN Model
+                // HairFastGAN nhận ảnh tham chiếu tóc: dùng ảnh tóc salon gửi kèm,
+                // không có thì lặp ảnh khách (model tự xử lý) theo schema gốc.
+                const hairRef = hairImage || userImage;
                 const response = await fetch('https://api.replicate.com/v1/predictions', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Token ${replicateToken}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Prefer': 'wait'
                     },
                     body: JSON.stringify({
-                        // Official HairFastGAN / Inpainting Model Version
-                        version: "a687353f86e5898696d747a8f895c256037e44a36f6424e64f7fa8b7d903673c",
+                        version: REPLICATE_HAIRFAST_VERSION,
                         input: {
                             face_image: userImage,
-                            hair_style_prompt: hairStyleName || hairKey || "korean layer cut hair"
+                            hair_image1: hairRef,
+                            hair_image2: hairRef,
+                            hair_image3: hairRef
                         }
                     })
                 });
 
-                const prediction = await response.json();
-                if (response.ok && prediction && prediction.urls && prediction.urls.get) {
-                    // Poll for Replicate result
-                    let completedPrediction = prediction;
-                    let attempts = 0;
-                    while (completedPrediction.status !== 'succeeded' && completedPrediction.status !== 'failed' && attempts < 35) {
-                        await new Promise(r => setTimeout(r, 1000));
-                        attempts++;
-                        const pollRes = await fetch(completedPrediction.urls.get, {
-                            headers: { 'Authorization': `Token ${replicateToken}` }
-                        });
-                        completedPrediction = await pollRes.json();
-                    }
-
-                    if (completedPrediction.status === 'succeeded' && completedPrediction.output) {
-                        const outputUrl = Array.isArray(completedPrediction.output) ? completedPrediction.output[0] : completedPrediction.output;
-                        return res.json({
-                            success: true,
-                            isRealAi: true,
-                            resultImage: outputUrl,
-                            message: 'Ghép tóc AI HairFastGAN chân thực thành công 100%!'
-                        });
-                    }
+                let prediction = await response.json();
+                if (!response.ok) {
+                    throw new Error(prediction.detail || `Replicate HTTP ${response.status}`);
                 }
+
+                // Poll cho tới khi xong (tối đa ~45s)
+                let attempts = 0;
+                while (prediction.status !== 'succeeded' && prediction.status !== 'failed' && prediction.status !== 'canceled' && attempts < 45) {
+                    await new Promise(r => setTimeout(r, 1000));
+                    attempts++;
+                    const pollRes = await fetch(prediction.urls.get, {
+                        headers: { 'Authorization': `Token ${replicateToken}` }
+                    });
+                    prediction = await pollRes.json();
+                }
+
+                if (prediction.status === 'succeeded' && prediction.output) {
+                    const outputUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+                    const resultImage = String(outputUrl).startsWith('data:')
+                        ? outputUrl
+                        : await fetchAsDataUrl(outputUrl);
+                    return res.json({
+                        success: true,
+                        isRealAi: true,
+                        resultImage,
+                        message: 'Ghép tóc AI HairFastGAN chân thực thành công 100%!'
+                    });
+                }
+
+                console.warn('⚠️ Replicate không trả kết quả thành công:', prediction.status, prediction.error || '');
             } catch (apiErr) {
                 console.warn('⚠️ Lỗi gọi Replicate Cloud API, tự động dùng AI Engine nội bộ:', apiErr.message);
             }
         }
 
-        // Fallback Smart AI Processing Response
         return res.json({
             success: true,
             isRealAi: false,
-            resultImage: userImage, // Trả về để Client Canvas Engine phủ mịn nếp tóc
+            resultImage: userImage,
             message: 'Đã sẵn sàng xử lý ghép tóc AI.',
             tip: 'Để kích hoạt AI Cloud HairFastGAN 4K, hãy thêm REPLICATE_API_TOKEN vào tệp .env của dự án.'
         });
@@ -145,7 +170,7 @@ app.post('/api/ai/try-on-real', async (req, res) => {
 
 /**
  * ============================================================================
- * HANA SALON LLM AI CHATBOT ENDPOINT (Gemini 2.5/1.5 API + Local RAG Engine)
+ * HANA SALON LLM AI CHATBOT ENDPOINT (Gemini 1.5 Flash API + Local RAG Engine)
  * ============================================================================
  */
 app.post('/api/ai/chat', async (req, res) => {
@@ -156,6 +181,14 @@ app.post('/api/ai/chat', async (req, res) => {
         }
 
         const geminiApiKey = process.env.GEMINI_API_KEY;
+        // Chuỗi model Gemini hiện đại (9/2026): gemini-2.5 đã bị ngừng với user mới,
+        // Google khuyến nghị gemini-3.x. Nếu model đầu bị 404 sẽ tự rơi xuống model kế.
+        const geminiModels = [
+            process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+            'gemini-3.8-flash',
+            'gemini-3.1-flash-lite',
+            'gemini-2.5-flash'
+        ].filter((model, index, arr) => arr.indexOf(model) === index);
 
         const systemInstruction = `Bạn là Hana AI Assistant - Chuyên gia tư vấn tạo mẫu tóc & chăm sóc sắc đẹp AI chuyên nghiệp của HANA HAIR SALON.
 Nhiệm vụ của bạn:
@@ -198,72 +231,118 @@ Vui lòng trả về kết quả định dạng JSON thuần túy (không bọc 
   "branchName": "Chi nhánh đề xuất" hoặc null
 }`;
 
-        // 1. Thử gọi Gemini REST API nếu đã có API Key
-        if (geminiApiKey) {
-            try {
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-
-                const contents = [];
-                if (Array.isArray(history) && history.length > 0) {
-                    history.slice(-6).forEach(h => {
-                        if (h.role && h.text) {
-                            contents.push({
-                                role: h.role === 'bot' ? 'model' : 'user',
-                                parts: [{ text: h.text }]
-                            });
-                        }
-                    });
-                }
-                contents.push({
-                    role: 'user',
-                    parts: [{ text: message }]
-                });
-
-                const requestBody = {
-                    contents: contents,
-                    systemInstruction: {
-                        parts: [{ text: systemInstruction }]
-                    },
-                    generationConfig: {
-                        temperature: 0.7,
-                        responseMimeType: "application/json"
-                    }
-                };
-
-                const geminiRes = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-
-                if (geminiRes.ok) {
-                    const geminiData = await geminiRes.json();
-                    const candidateText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (candidateText) {
-                        let parsed = null;
-                        try {
-                            const cleanJsonStr = candidateText.replace(/```json/g, '').replace(/```/g, '').trim();
-                            parsed = JSON.parse(cleanJsonStr);
-                        } catch (e) {
-                            parsed = { reply: candidateText, action: null };
-                        }
-
-                        return res.json({
-                            success: true,
-                            isRealAi: true,
-                            reply: parsed.reply || candidateText,
-                            action: parsed.action || null,
-                            serviceName: parsed.serviceName || null,
-                            branchName: parsed.branchName || null
-                        });
-                    }
-                }
-            } catch (geminiErr) {
-                console.warn('⚠️ Gemini API error, switching to local RAG fallback:', geminiErr.message);
-            }
+        // Gọi Gemini REST API, thử lần lượt từng model trong chuỗi fallback
+        if (!geminiApiKey) {
+            return res.status(503).json({
+                success: false,
+                message: 'Thiếu GEMINI_API_KEY trong tệp .env.'
+            });
         }
 
-        // 2. Smart Local RAG Fallback Engine
+        try {
+            const contents = [];
+            if (Array.isArray(history) && history.length > 0) {
+                history.slice(-6).forEach(h => {
+                    if (h && h.text && (h.role === 'user' || h.role === 'bot' || h.role === 'model')) {
+                        contents.push({
+                            role: h.role === 'bot' || h.role === 'model' ? 'model' : 'user',
+                            parts: [{ text: h.text }]
+                        });
+                    }
+                });
+            }
+            contents.push({
+                role: 'user',
+                parts: [{ text: message }]
+            });
+
+            const requestBody = {
+                contents: contents,
+                systemInstruction: {
+                    parts: [{ text: systemInstruction }]
+                },
+                generationConfig: {
+                    temperature: 0.7,
+                    responseMimeType: "application/json"
+                }
+            };
+
+            let lastErrorStatus = 0;
+            let lastErrorText = '';
+
+            for (const geminiModel of geminiModels) {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${encodeURIComponent(geminiModel)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+                try {
+                    const geminiRes = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (geminiRes.ok) {
+                        const geminiData = await geminiRes.json();
+                        const candidateText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (candidateText && candidateText.trim()) {
+                            let parsed = null;
+                            try {
+                                const cleanJsonStr = candidateText.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+                                parsed = JSON.parse(cleanJsonStr);
+                            } catch (e) {
+                                parsed = { reply: candidateText.trim(), action: null };
+                            }
+
+                            return res.json({
+                                success: true,
+                                isRealAi: true,
+                                reply: parsed.reply || candidateText,
+                                action: parsed.action || null,
+                                serviceName: parsed.serviceName || null,
+                                branchName: parsed.branchName || null
+                            });
+                        }
+                        // 200 nhưng không có nội dung -> thử model kế tiếp
+                        lastErrorStatus = 200;
+                        lastErrorText = 'Phản hồi trống';
+                        continue;
+                    }
+
+                    lastErrorStatus = geminiRes.status;
+                    lastErrorText = await geminiRes.text();
+
+                    // 404/400: model không tồn tại hoặc không hỗ trợ -> thử model kế tiếp
+                    if (geminiRes.status === 404 || geminiRes.status === 400) {
+                        console.warn(`⚠️ Model ${geminiModel} không khả dụng (HTTP ${geminiRes.status}), thử model kế tiếp...`);
+                        continue;
+                    }
+
+                    // Lỗi khác (401/403/429/5xx): dừng, báo lỗi rõ ràng
+                    console.error(`❌ LỖI API GEMINI (HTTP ${geminiRes.status}) trên ${geminiModel}:`, lastErrorText);
+                    break;
+                } catch (modelErr) {
+                    lastErrorStatus = 0;
+                    lastErrorText = modelErr.message || String(modelErr);
+                    console.warn(`⚠️ Lỗi kết nối tới model ${geminiModel}:`, lastErrorText);
+                }
+            }
+
+            const hint = lastErrorStatus === 401 || lastErrorStatus === 403
+                ? 'API key Gemini không hợp lệ hoặc chưa bật Generative Language API.'
+                : lastErrorStatus === 429
+                    ? 'Đã vượt hạn mức miễn phí của Gemini, vui lòng thử lại sau ít phút.'
+                    : 'Kiểm tra GEMINI_API_KEY / GEMINI_MODEL trong tệp .env và kết nối mạng.';
+            return res.status(502).json({
+                success: false,
+                message: `Gemini không phản hồi được${lastErrorStatus ? ` (HTTP ${lastErrorStatus})` : ''}. ${hint}`
+            });
+        } catch (geminiErr) {
+            console.error('⚠️ Lỗi gọi API Gemini:', geminiErr);
+            return res.status(502).json({
+                success: false,
+                message: 'Không thể kết nối Google Gemini. Vui lòng thử lại sau.'
+            });
+        }
+
+        /* Smart Local RAG Fallback Engine (giữ lại cho tài liệu tham khảo)
         const msgLower = message.toLowerCase();
         let reply = '';
         let action = null;
@@ -299,7 +378,7 @@ Vui lòng trả về kết quả định dạng JSON thuần túy (không bọc 
             action,
             serviceName,
             branchName
-        });
+        }); */
 
     } catch (err) {
         console.error('Lỗi Chatbot AI:', err);
@@ -338,4 +417,4 @@ server8080.listen(ALT_PORT, () => {
     } else {
         console.error('Lỗi cổng 8080:', err);
     }
-});
+});

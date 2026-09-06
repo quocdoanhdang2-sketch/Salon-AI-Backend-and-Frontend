@@ -16,7 +16,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- MediaPipe Vision for Face Landmarker 478 Points -->
-    <script src="https://unpkg.com/@mediapipe/tasks-vision/vision_bundle.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.js" crossorigin="anonymous"></script>
     <!-- Three.js 3D WebGL Engine for 3D AR Live Mirror -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"
@@ -375,30 +375,18 @@
                                 class="fa-solid fa-scissors"></i> CHỌN KIỂU TÓC 3D REAL-TIME</h4>
                         <div class="ar-hair-preset-list" id="arHairPresetList"
                             style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                            <button class="btn btn-outline-gold btn-sm ar-preset-btn active" data-hair3d="sidepart_nam_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🤵
-                                Side Part 7/3 Nam</button>
-                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="layer_nu_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">💇
-                                Layer Nữ 3D</button>
-                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="wave_nu_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🌀
-                                Sóng Lơi 3D</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn active" data-hair3d="curly_nu_3d"
+                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">TÓC XOĂN DÀI</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="hime_cut_nu_3d"
+                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">TÓC HIME</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="straight_middlepart_nu_3d"
+                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">TÓC RẼ NGÔI GIỮA UỐN SÓNG</button>
                             <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="bob_nu_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">✂️
-                                Bob Balayage 3D</button>
-                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="wolf_cut_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🐺
-                                Wolf Cut 3D</button>
+                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">TÓC BOB NGẮN UỐN CỤP ĐUÔI</button>
+                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="middlepart_nam_3d"
+                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">TÓC NAM NGẮN RẼ NGÔI GIỮA</button>
                             <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="layer_nam_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">💈
-                                Layer Nam Crop</button>
-                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="undercut_nam_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">⚡
-                                Undercut Pompadour</button>
-                            <button class="btn btn-outline-gold btn-sm ar-preset-btn" data-hair3d="pixie_nu_3d"
-                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">🎀
-                                Pixie Cut Nữ</button>
+                                style="text-align: left; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-size: 0.8rem;">TÓC LAYER NGẮN VUỐT RỦ</button>
                         </div>
 
                         <h4 style="font-size: 0.95rem; color: #dfa132; margin-bottom: 12px; font-weight: 700;"><i
@@ -2236,9 +2224,6 @@
                         style="position: relative; width: 100%; aspect-ratio: 4/3; background: #05070a; border-radius: 16px; overflow: hidden; border: 1px solid rgba(223,161,50,0.3); box-shadow: 0 8px 30px rgba(0,0,0,0.7);">
                         <canvas id="aiTryOnCanvasSnapEngine"
                             style="width: 100%; height: 100%; object-fit: contain; display: block;"></canvas>
-                        <div class="tryon-ai-badge"
-                            style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.8); color: #dfa132; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(223,161,50,0.3);">
-                            <i class="fa-solid fa-camera-retro"></i> ẢNH GƯƠNG 3D AR THỰC TẾ</div>
                     </div>
 
                     <!-- Cột phải: Thông tin nhận xét, ưu nhược điểm, tải ảnh & đặt lịch -->

@@ -11,3 +11,10 @@ __pycache__/
 
 # Node/Frontend
 node_modules/
+
+# Dự án con Text-To-Image-Generator có repo git riêng (43MB build output bin/obj)
+Text-To-Image-Generator/
+
+# File hệ thống
+Thumbs.db
+.DS_Store
