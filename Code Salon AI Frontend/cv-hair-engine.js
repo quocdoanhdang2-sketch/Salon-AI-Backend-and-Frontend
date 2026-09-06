@@ -189,6 +189,24 @@ class CVHairEngine {
 
         // Initialize MediaPipe 3D FaceLandmarker
         this.initMediaPipe();
+
+        // Manifest từng kiểu tóc: mốc chân tóc (anchorY) riêng cho ảnh AI sinh ra
+        this.hairManifest = {};
+        this.loadHairManifest();
+    }
+
+    loadHairManifest() {
+        fetch('assets/hairs/manifest.json', { cache: 'no-store' })
+            .then(r => (r.ok ? r.json() : {}))
+            .then(json => { this.hairManifest = json && typeof json === 'object' ? json : {}; })
+            .catch(() => { this.hairManifest = {}; });
+    }
+
+    /** Mốc chân tóc của kiểu tóc (tỉ lệ 0..1 chiều cao ảnh trùng điểm trán). */
+    getHairAnchorY(hairKey) {
+        const entry = this.hairManifest && this.hairManifest[hairKey];
+        const value = entry && Number(entry.anchorY);
+        return Number.isFinite(value) && value > 0.15 && value < 0.9 ? value : 0.52;
     }
 
     emitStatus(message) {
@@ -341,6 +359,14 @@ class CVHairEngine {
                     if (lm && lm.length >= 454) {
                         this.landmarks = lm;
                         this.calculateFaceMetrics(img.naturalWidth, img.naturalHeight);
+                        // Gate kích thước mặt: mặt quá nhỏ/to so với ảnh (ảnh cảnh, ảnh nhóm)
+                        // là không đáng tin -> bỏ landmark, dùng neo an toàn thay vì tóc khổng lồ
+                        const fw = this.faceMetrics.faceWidth || 0;
+                        const iw = img.naturalWidth || 1;
+                        if (!fw || fw < iw * 0.12 || fw > iw * 0.85) {
+                            this.landmarks = null;
+                            this.faceMetrics.foreheadX = 0;
+                        }
                     }
                 }
 
@@ -590,9 +616,9 @@ class CVHairEngine {
     drawHairOverlay(ctx, width, height) {
         if (!this.hairImage) return;
 
-        // Ảnh tóc chuẩn 600x600, mốc tóc trán (hairline) nằm ở 52% chiều cao ảnh
+        // Ảnh tóc chuẩn 600x600; mốc tóc trán đọc từ manifest theo từng kiểu
         const HAIR_BOX = 600;
-        const HAIRLINE_RATIO = 0.52;
+        const HAIRLINE_RATIO = this.getHairAnchorY(this.currentHairKey);
 
         ctx.save();
         ctx.globalAlpha = this.transform.opacity;
@@ -1058,7 +1084,7 @@ class CVHairEngine {
         if (!this.hairImage || !this.faceMetrics || !this.faceMetrics.foreheadX) return;
 
         const HAIR_BOX = 600;
-        const HAIRLINE_RATIO = 0.52;
+        const HAIRLINE_RATIO = this.getHairAnchorY(this.currentHairKey);
 
         ctx.save();
         ctx.globalAlpha = this.transform.opacity;

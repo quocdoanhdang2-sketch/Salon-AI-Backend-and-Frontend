@@ -386,6 +386,60 @@ Vui lòng trả về kết quả định dạng JSON thuần túy (không bọc 
     }
 });
 
+/**
+ * ============================================================================
+ * AI HAIR GENERATOR (text-to-image chạy GPU local qua ai-runtime, cổng 8010)
+ * ----------------------------------------------------------------------------
+ * Frontend mô tả kiểu tóc bằng chữ -> dịch vụ Python (SD-Turbo) vẽ mẫu tóc,
+ * cắt nền, lưu vào assets/hairs/ + manifest.json rồi trả dataURL về cho khách
+ * thử ngay trên gương AI Studio.
+ * ============================================================================
+ */
+const HAIR_GEN_URL = process.env.HAIR_GEN_URL || 'http://localhost:8010';
+
+app.post('/api/ai/generate-hair', async (req, res) => {
+    try {
+        const { prompt, label, steps, seed } = req.body || {};
+        if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 6) {
+            return res.status(400).json({ success: false, message: 'Hãy mô tả kiểu tóc muốn sinh (ít nhất 6 ký tự).' });
+        }
+
+        const response = await fetch(`${HAIR_GEN_URL}/generate-hair`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt.trim(), label, steps, seed }),
+            signal: AbortSignal.timeout(120000) // lần đầu phải nạp model lên GPU
+        });
+
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result) {
+            const detail = result && result.detail ? result.detail : `HTTP ${response.status}`;
+            return res.status(502).json({ success: false, message: `Dịch vụ AI local: ${detail}` });
+        }
+
+        return res.json(result);
+    } catch (err) {
+        if (err.name === 'TimeoutError') {
+            return res.status(504).json({ success: false, message: 'AI vẽ quá lâu (quá 2 phút). Thử lại nhé!' });
+        }
+        console.error('AI hair generator proxy error:', err.message);
+        return res.status(502).json({
+            success: false,
+            message: 'Chưa kết nối được dịch vụ AI sinh tóc local. Hãy chạy: python ai-runtime/hair_service.py'
+        });
+    }
+});
+
+app.get('/api/ai/hair-gen-status', async (req, res) => {
+    try {
+        const response = await fetch(`${HAIR_GEN_URL}/health`, { signal: AbortSignal.timeout(5000) });
+        const result = await response.json();
+        return res.json({ success: true, data: result });
+    } catch (err) {
+        return res.json({ success: false, message: 'Dịch vụ AI sinh tóc chưa chạy.' });
+    }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api', bookingRoutes);
 

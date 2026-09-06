@@ -1934,34 +1934,122 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    hairCards.forEach(card => {
-        card.addEventListener('click', async () => {
-            hairCards.forEach(c => c.classList.remove('active-hair'));
-            card.classList.add('active-hair');
-            const hairKey = card.getAttribute('data-hair') || 'layer_nu';
-            const hairName = card.getAttribute('data-name') || 'Mẫu tóc Salon';
+    // Chọn 1 thẻ tóc: dùng chung cho thẻ tĩnh và thẻ AI sinh động
+    function selectHairCard(card) {
+        document.querySelectorAll('.ai-hair-card').forEach(c => c.classList.remove('active-hair'));
+        card.classList.add('active-hair');
+        const hairKey = card.getAttribute('data-hair') || 'layer_nu';
+        const hairName = card.getAttribute('data-name') || 'Mẫu tóc Salon';
 
-            if (cvEngine) {
-                await cvEngine.setHairImage(hairKey);
+        if (cvEngine) {
+            cvEngine.setHairImage(hairKey).then(ok => {
+                if (!ok) showToast(`Chưa nạp được ảnh mẫu "${hairName}"!`, 'fa-circle-exclamation');
+            });
 
-                // Update Pros & Cons Analysis Card
-                const analysis = cvEngine.getHairstyleAnalysis(hairKey);
-                const nameEl = document.getElementById('analysisHairName');
-                const matchEl = document.getElementById('analysisMatchVal');
-                const prosEl = document.getElementById('analysisProsList');
-                const consEl = document.getElementById('analysisConsList');
-                const tipEl = document.getElementById('analysisCareTip');
+            // Update Pros & Cons Analysis Card
+            const analysis = cvEngine.getHairstyleAnalysis(hairKey);
+            const nameEl = document.getElementById('analysisHairName');
+            const matchEl = document.getElementById('analysisMatchVal');
+            const prosEl = document.getElementById('analysisProsList');
+            const consEl = document.getElementById('analysisConsList');
+            const tipEl = document.getElementById('analysisCareTip');
 
-                if (nameEl) nameEl.textContent = analysis.name || hairName;
-                if (matchEl) matchEl.textContent = `${analysis.matchScore || 95}% Phù Hợp`;
-                if (prosEl) prosEl.innerHTML = (analysis.pros || []).map(p => `<li>${p}</li>`).join('');
-                if (consEl) consEl.innerHTML = (analysis.cons || []).map(c => `<li>${c}</li>`).join('');
-                if (tipEl) tipEl.textContent = `Mẹo chăm sóc: ${analysis.careTip || 'Gội sấy dưỡng tóc đều đặn.'}`;
+            if (nameEl) nameEl.textContent = analysis.name || hairName;
+            if (matchEl) matchEl.textContent = `${analysis.matchScore || 95}% Phù Hợp`;
+            if (prosEl) prosEl.innerHTML = (analysis.pros || []).map(p => `<li>${p}</li>`).join('');
+            if (consEl) consEl.innerHTML = (analysis.cons || []).map(c => `<li>${c}</li>`).join('');
+            if (tipEl) tipEl.textContent = `Mẹo chăm sóc: ${analysis.careTip || 'Gội sấy dưỡng tóc đều đặn.'}`;
+        }
+
+        showToast(`Đã đổi sang kiểu: ${hairName}`, 'fa-scissors');
+    }
+
+    function bindHairCard(card) {
+        card.addEventListener('click', () => selectHairCard(card));
+    }
+
+    hairCards.forEach(bindHairCard);
+
+    // =========================================================================
+    // 🪄 AI SINH TÓC THEO Ý KHÁCH (text-to-image chạy GPU local, SD-Turbo)
+    // =========================================================================
+    function injectAiHairGenerator() {
+        const grid = document.getElementById('aiHairstyleGrid');
+        if (!grid || document.getElementById('aiHairGenBox')) return;
+
+        const box = document.createElement('div');
+        box.id = 'aiHairGenBox';
+        box.style.cssText = 'margin:0 0 14px;padding:14px 16px;border:1px dashed rgba(223,161,50,0.55);border-radius:14px;background:rgba(223,161,50,0.06);';
+        box.innerHTML = `
+            <div style="font-size:0.85rem;color:#dfa132;font-weight:700;margin-bottom:8px;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI SINH TÓC THEO Ý BẠN <span style="font-weight:400;color:rgba(255,255,255,0.6);">(mô tả kiểu tóc muốn làm, AI vẽ mẫu ngay trên máy salon)</span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <input type="text" id="aiHairGenPrompt" maxlength="200" placeholder="VD: tóc xoăn sóng dài ngang lưng nhuộm nâu caramel..."
+                    style="flex:1;min-width:220px;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.4);color:#fff;font-size:0.85rem;outline:none;" />
+                <button id="aiHairGenBtn" style="padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-weight:700;font-size:0.85rem;background:linear-gradient(135deg,#a855f7,#dfa132);color:#fff;">
+                    <i class="fa-solid fa-wand-sparkles"></i> SINH TÓC MỚI
+                </button>
+            </div>
+            <div id="aiHairGenHint" style="display:none;margin-top:8px;font-size:0.78rem;color:#c084fc;"></div>
+        `;
+        grid.parentNode.insertBefore(box, grid);
+
+        const input = box.querySelector('#aiHairGenPrompt');
+        const btn = box.querySelector('#aiHairGenBtn');
+        const hint = box.querySelector('#aiHairGenHint');
+
+        async function generateNewHair() {
+            const prompt = (input?.value || '').trim();
+            if (prompt.length < 6) {
+                showToast('Hãy mô tả kỹ kiểu tóc muốn sinh (ít nhất 6 ký tự).', 'fa-circle-exclamation');
+                return;
             }
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI ĐANG VẼ...';
+            if (hint) { hint.style.display = 'block'; hint.textContent = 'Lần đầu chạy AI cần nạp model ~20-40 giây, các lần sau chỉ ~2-5 giây.'; }
 
-            showToast(`Đã đổi sang kiểu: ${hairName}`, 'fa-scissors');
-        });
-    });
+            try {
+                const res = await apiRequest('/ai/generate-hair', {
+                    method: 'POST',
+                    body: JSON.stringify({ prompt, label: prompt })
+                });
+
+                const card = document.createElement('div');
+                card.className = 'ai-hair-card';
+                card.setAttribute('data-cat', 'ai');
+                card.setAttribute('data-hair', res.key);
+                card.setAttribute('data-name', res.label || prompt);
+                card.innerHTML = `
+                    <img src="${res.imageDataUrl}" alt="${res.label || prompt}">
+                    <div class="ai-hair-card-info">
+                        <strong>${(res.label || prompt).slice(0, 40)}</strong>
+                        <span>🪄 AI vẽ theo mô tả của bạn</span>
+                    </div>`;
+                grid.prepend(card);
+                bindHairCard(card);
+                selectHairCard(card);
+
+                const seconds = ((res.elapsedMs || 0) / 1000).toFixed(1);
+                showToast(`🪄 AI đã vẽ xong kiểu tóc mới trong ${seconds}s!`, 'fa-wand-magic-sparkles');
+                if (hint) { hint.style.display = 'none'; }
+                input.value = '';
+            } catch (error) {
+                console.error('Lỗi sinh tóc AI:', error);
+                const msg = error.message || 'Không sinh được tóc lúc này.';
+                showToast(`Lỗi AI sinh tóc: ${msg}`, 'fa-circle-exclamation');
+                if (hint) hint.textContent = `Lỗi: ${msg}. Hãy đảm bảo dịch vụ AI local đang chạy (python hair_service.py).`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        btn.addEventListener('click', generateNewHair);
+        input?.addEventListener('keypress', (e) => { if (e.key === 'Enter') generateNewHair(); });
+    }
+    injectAiHairGenerator();
 
     // 2D Real AI Hair Swap Button
     const btnRealAiSwap = document.getElementById('btnRealAiSwap');

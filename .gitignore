@@ -18,3 +18,10 @@ Text-To-Image-Generator/
 # File hệ thống
 Thumbs.db
 .DS_Store
+
+# AI runtime nặng (Python 3.12 + PyTorch + cache pip) — ai-runtime/*.py thì vẫn track
+ai-runtime/Python312/
+ai-runtime/hf-cache/
+ai-runtime/*.log
+ai-runtime/_new_hairs_preview.jpg
+ai-runtime/__pycache__/

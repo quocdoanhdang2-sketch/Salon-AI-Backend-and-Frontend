@@ -64,11 +64,36 @@ Mở `http://localhost:3000` (hoặc `8080`). Tài khoản mẫu: `admin/admin12
 │   ├── dich-vu.html               # Trang dịch vụ (cùng engine try-on)
 │   ├── cv-hair-engine.js          # Engine MediaPipe + Three.js + ghép tóc 2D
 │   ├── script.js                  # Tương tác UI, camera, chụp ảnh, chatbot
-│   ├── assets/hairs/              # 8 kiểu tóc PNG trong suốt cho try-on 2D
+│   ├── assets/hairs/              # Bộ tóc PNG trong suốt (AI vẽ) + manifest.json
 │   ├── assets/models/             # Mô hình tóc 3D .glb cho gương AR
-│   └── tools/generate_hair_assets.py  # Sinh lại bộ ảnh tóc (OpenCV)
-└── Text-To-Image-Generator/       # Dự án con có git riêng (không track ở đây)
+│   └── tools/                     # Kiểm tra tĩnh + sinh tóc dự phòng (OpenCV)
+├── ai-runtime/                    # 🪄 AI sinh tóc local (SD-Turbo trên GPU)
+│   ├── hair_service.py            # FastAPI cổng 8010: text -> ảnh tóc -> PNG
+│   ├── generate_hair_library.py   # Sinh lại cả bộ 8 kiểu tóc chuẩn
+│   └── Python312/                 # Python 3.12 + PyTorch CUDA (đã gitignore)
+└── Text-To-Image-Generator/       # Dự án con có git riêng (ai-core đã sửa sang SD-Turbo)
 ```
+
+## 🪄 AI Sinh Tóc Từ Chữ (chạy GPU local)
+
+Salon có **máy sinh kiểu tóc riêng** (text-to-image bằng Stable Diffusion Turbo) chạy
+ngay trên GPU NVIDIA của máy (RTX 3050 4GB là đủ), không cần API cloud:
+
+```powershell
+# Chạy 1 lần: cài bộ máy AI (Python 3.12 + PyTorch CUDA + diffusers, ~7GB)
+# Đã có sẵn Python 3.12 trong ai-runtime/Python312 — chỉ cần:
+cd ai-runtime\Python312
+.\python.exe -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+.\python.exe -m pip install diffusers transformers accelerate safetensors pillow fastapi uvicorn opencv-python-headless
+
+# Chạy dịch vụ sinh tóc (cổng 8010)
+.\python.exe ..\hair_service.py
+```
+
+- Trong web: **AI Studio** → hộp **"🪄 AI Sinh Tóc Theo Ý Bạn"** — gõ mô tả kiểu tóc,
+  AI vẽ mẫu trong 2-5 giây và đội ngay lên ảnh khách.
+- Sinh lại **toàn bộ 8 kiểu tóc chuẩn** (xoá bộ cũ, thay mới): `.\python.exe ..\generate_hair_library.py`
+- 📘 Xem giáo trình đầy đủ trong [HUAN-LUYEN-AI.md](HUAN-LUYEN-AI.md).
 
 ## 🔧 Ghi chú kỹ thuật
 

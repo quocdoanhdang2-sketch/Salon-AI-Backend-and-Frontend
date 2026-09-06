@@ -17,6 +17,24 @@
                 "uriFormat": "http://localhost:%s",
                 "action": "debugWithChrome"
             }
+        },
+        {
+            "name": "AI Sinh Tóc (SD-Turbo GPU, cổng 8010)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ai-runtime/hair_service.py",
+            "python": "${workspaceFolder}/ai-runtime/Python312/python.exe",
+            "cwd": "${workspaceFolder}/ai-runtime",
+            "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Toàn Hệ Thống (Web + AI Sinh Tóc)",
+            "configurations": [
+                "Start HANA Salon (Backend + Chrome)",
+                "AI Sinh Tóc (SD-Turbo GPU, cổng 8010)"
+            ]
         }
     ]
 }
