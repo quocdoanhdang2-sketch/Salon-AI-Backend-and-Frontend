@@ -185,6 +185,45 @@ def cutout_white_background(bgr: np.ndarray) -> np.ndarray:
     return np.dstack([bgr, alpha])
 
 
+def _render_painted_to_frame(painted: np.ndarray):
+    """Đưa ảnh tóc đã vẽ (600x600 RGBA) vào khung GEN: trả về
+    (init trắng chèn tóc, painted_frame RGBA, mask_frame) cùng phép chiếu."""
+    alpha = painted[..., 3]
+    ys, xs = np.nonzero(alpha > 40)
+    if len(xs) == 0:
+        raise ValueError('Ảnh tóc rỗng')
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    content = painted[y0:y1, x0:x1]
+    scale = min((GEN_W - 40) / content.shape[1], (GEN_H - 60) / content.shape[0])
+    new_w, new_h = max(1, int(content.shape[1] * scale)), max(1, int(content.shape[0] * scale))
+    resized = cv2.resize(content, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    init = np.full((GEN_H, GEN_W, 3), 255, dtype=np.uint8)
+    painted_frame = np.zeros((GEN_H, GEN_W, 4), dtype=np.uint8)
+    mask_frame = np.zeros((GEN_H, GEN_W), dtype=np.uint8)
+    px, py = (GEN_W - new_w) // 2, (GEN_H - new_h) // 2
+    region = init[py:py + new_h, px:px + new_w]
+    a = (resized[..., 3:4].astype(np.float32)) / 255.0
+    region_f = region.astype(np.float32) * (1 - a) + resized[..., :3].astype(np.float32) * a
+    init[py:py + new_h, px:px + new_w] = region_f.astype(np.uint8)
+    painted_frame[py:py + new_h, px:px + new_w] = resized
+    mask_frame[py:py + new_h, px:px + new_w] = (resized[..., 3] > 128).astype(np.uint8) * 255
+    return init, painted_frame, mask_frame
+
+
+def _fill_inside_mask(ai_rgba: np.ndarray, painted_frame: np.ndarray, mask_frame: np.ndarray) -> np.ndarray:
+    """Ép silhouette làm khung xương: trong phạm vi dáng tóc (+nới 5px), chỗ nào
+    AI vẽ hụt (alpha thấp) thì đổ màu tóc procedural vào -> KHÔNG BAO GIỜ thiếu miếng."""
+    inside = cv2.dilate(mask_frame, np.ones((11, 11), np.uint8)) > 0
+    out = ai_rgba.copy()
+    hole = inside & (out[..., 3] < 60)
+    out[hole, :3] = painted_frame[hole, :3]
+    alpha_ai = out[..., 3].astype(np.float32)
+    alpha_pp = painted_frame[..., 3].astype(np.float32)
+    out[..., 3] = np.where(inside, np.maximum(alpha_ai, alpha_pp * 0.92), alpha_ai).astype(np.uint8)
+    return out
+
+
 def _rgba_painted_to_init(rgba: np.ndarray, with_mask: bool = False):
     """Ghép ảnh tóc ĐÃ VẼ SẴN SỢI (procedural RGBA) lên nền trắng, căn giữa
     khung GEN_W x GEN_H — ảnh init giàu chi tiết cho img2img tạo tóc thật."""
@@ -241,24 +280,27 @@ def _enforce_mask(rgba: np.ndarray, mask_frame: np.ndarray, feather_px: int = 6)
 
 
 def find_hairline_ratio(rgba: np.ndarray) -> float:
-    """Dò chân tóc bằng BĂNG GIỮA 1/3 ảnh: hàng đầu tiên (từ trên xuống)
-    mà dải ngang giữa ảnh trống hơn 60% — đó là mép trên vùng mở mặt.
-    Chống nhiễu với kiểu rẽ ngôi giữa (khe hẹp ở giữa không đủ để triger)."""
+    """Dò chân tóc bằng băng giữa 1/3 ảnh: hàng đầu tiên (từ trên xuống) mà
+    băng giữa trống >60% ĐỒNG THỜI hai bên còn TƯỜNG TÓC DÀY (mỗi bên >=15%
+    bề rộng) — loại bỏ đánh lừa của đỉnh vòmCrowne (hai bên còn mỏng)."""
     alpha = rgba[..., 3]
     h, w = alpha.shape
     solid = (alpha > 60)
     c0, c1 = int(w * 0.33), int(w * 0.67)
+    side = int(w * 0.15)
 
     consecutive = 0
     for y in range(int(h * 0.15), int(h * 0.92)):
-        band = solid[y, c0:c1]
-        if band.mean() < 0.40:            # băng giữa trống > 60%
+        row = solid[y]
+        band = row[c0:c1]
+        left_wall = float(row[:c0].mean())
+        right_wall = float(row[c1:].mean())
+        if band.mean() < 0.40 and left_wall > 0.45 and right_wall > 0.45:
             consecutive += 1
-            if consecutive >= 3:          # phải trống 3 hàng liên tiếp
+            if consecutive >= 3:
                 return round((y - 2) / h, 3)
         else:
             consecutive = 0
-    # Tóc phủ kín (fringe phủ hết trán) -> neo ở 40% chiều cao
     return 0.40
 
 
@@ -315,10 +357,11 @@ def build_hair_asset_from_silhouette(desc: str, style_key: str, seed: int,
     from generate_hair_assets import build_base_silhouette, paint_hair
     mask = build_base_silhouette(style_key)
     painted = paint_hair(mask, seed % 1000)
-    init, mask_frame = _rgba_painted_to_init(painted, with_mask=True)
+    init, painted_frame, mask_frame = _render_painted_to_frame(painted)
 
     bgr = i2i_refine(init, desc, seed, strength=0.5, steps=steps)
     rgba = cutout_white_background(bgr)
+    rgba = _fill_inside_mask(rgba, painted_frame, mask_frame)
     rgba = _enforce_mask(rgba, mask_frame)
     if (rgba[..., 3] > 40).mean() < 0.06:
         raise HTTPException(status_code=502, detail="Ảnh tinh chỉnh mất vùng tóc, thử seed khác.")

@@ -75,21 +75,21 @@ def build_base_silhouette(style: str) -> np.ndarray:
     """Dựng mặt nạ silhouette cơ bản của từng kiểu tóc."""
     cap = _ellipse_mask(CX, HAIRLINE - 40, 224, 190)                 # vòm đầu
     crown_top = _ellipse_mask(CX, HAIRLINE - 105, 150, 105)          # đỉnh đầu cao hơn
-    face_open = _ellipse_mask(CX, HAIRLINE + 168, 158, 170)          # vùng mặt để trống
+    face_open = _ellipse_mask(CX, HAIRLINE + 158, 132, 152)          # vùng mặt để trống (nhỏ -> màn tóc dày)
 
     if style in ('layer_nu', 'straight_silk'):
         # Tóc dài thẳng/layer: hai hồi tóc suôn xuống gần đáy ảnh
         left = _polygon_mask([
-            (CX - 216, HAIRLINE - 60), (CX - 236, HAIRLINE + 120),
-            (CX - 214, HAIRLINE + 268), (CX - 196, SIZE - 6),
-            (CX - 96, SIZE - 2), (CX - 130, HAIRLINE + 40),
-            (CX - 118, HAIRLINE - 40),
+            (CX - 226, HAIRLINE - 70), (CX - 252, HAIRLINE + 130),
+            (CX - 246, HAIRLINE + 300), (CX - 226, SIZE - 4),
+            (CX - 96, SIZE - 2), (CX - 122, HAIRLINE + 80),
+            (CX - 112, HAIRLINE - 30),
         ])
         right = _polygon_mask([
-            (CX + 216, HAIRLINE - 60), (CX + 236, HAIRLINE + 120),
-            (CX + 214, HAIRLINE + 268), (CX + 196, SIZE - 6),
-            (CX + 96, SIZE - 2), (CX + 130, HAIRLINE + 40),
-            (CX + 118, HAIRLINE - 40),
+            (CX + 226, HAIRLINE - 70), (CX + 252, HAIRLINE + 130),
+            (CX + 246, HAIRLINE + 300), (CX + 226, SIZE - 4),
+            (CX + 96, SIZE - 2), (CX + 122, HAIRLINE + 80),
+            (CX + 112, HAIRLINE - 30),
         ])
         mask = _union([cap, crown_top, left, right])
         mask = _subtract(mask, face_open)
@@ -115,30 +115,32 @@ def build_base_silhouette(style: str) -> np.ndarray:
         pts_l, pts_r = [], []
         for i in range(25):
             t = i / 24
-            y = HAIRLINE - 40 + (SIZE - 10 - (HAIRLINE - 40)) * t
-            swing = math.sin(t * math.pi * 2.4) * 22
-            pts_l.append((max(6, CX - 224 + t * 18 - swing), y))
-            pts_r.append((min(SIZE - 6, CX + 224 - t * 18 + swing), y))
-        body_l = _polygon_mask(pts_l + [(CX - 118, HAIRLINE + 40), (CX - 126, SIZE - 12)])
-        body_r = _polygon_mask(pts_r + [(CX + 118, HAIRLINE + 40), (CX + 126, SIZE - 12)])
+            y = HAIRLINE - 50 + (SIZE - 4 - (HAIRLINE - 50)) * t
+            swing = math.sin(t * math.pi * 2.4) * 24
+            pts_l.append((max(6, CX - 242 + t * 14 - swing), y))
+            pts_r.append((min(SIZE - 6, CX + 242 - t * 14 + swing), y))
+        body_l = _polygon_mask(pts_l + [(CX - 110, HAIRLINE + 60), (CX - 118, SIZE - 8)])
+        body_r = _polygon_mask(pts_r + [(CX + 110, HAIRLINE + 60), (CX + 118, SIZE - 8)])
         mask = _union([cap, crown_top, body_l, body_r])
         return _subtract(mask, face_open)
 
     if style == 'bob_nu':
         # Bob ngắn: vòm tròn ôm xuống ngang cằm, đuôi cụp nhẹ vào trong
         sides = _union([
-            _ellipse_mask(CX - 190, HAIRLINE + 40, 66, 118, 8),
-            _ellipse_mask(CX + 190, HAIRLINE + 40, 66, 118, -8),
-            _ellipse_mask(CX - 176, HAIRLINE + 128, 54, 66, 18),
-            _ellipse_mask(CX + 176, HAIRLINE + 128, 54, 66, -18),
+            _ellipse_mask(CX - 196, HAIRLINE + 40, 84, 132, 8),
+            _ellipse_mask(CX + 196, HAIRLINE + 40, 84, 132, -8),
+            _ellipse_mask(CX - 188, HAIRLINE + 150, 70, 92, 18),
+            _ellipse_mask(CX + 188, HAIRLINE + 150, 70, 92, -18),
+            _ellipse_mask(CX - 160, HAIRLINE + 216, 58, 62, 24),
+            _ellipse_mask(CX + 160, HAIRLINE + 216, 58, 62, -24),
         ])
         mask = _union([cap, crown_top, sides])
         return _subtract(mask, face_open)
 
     if style == 'wolf_cut':
         # Wolf cut: crown phồng + tầng răng cưa lởm chởm quanh vai
-        shag = _union([_ellipse_mask(CX - 150, HAIRLINE + 140, 96, 130, 12),
-                       _ellipse_mask(CX + 150, HAIRLINE + 140, 96, 130, -12)])
+        shag = _union([_ellipse_mask(CX - 162, HAIRLINE + 170, 118, 170, 12),
+                       _ellipse_mask(CX + 162, HAIRLINE + 170, 118, 170, -12)])
         mask = _union([cap, crown_top, shag])
         rng = np.random.default_rng(42)
         for _ in range(26):

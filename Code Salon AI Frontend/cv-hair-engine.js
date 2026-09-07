@@ -18,6 +18,7 @@ class CVHairEngine {
         this.isLandmarkerReady = false;
         this.landmarkerInitPromise = null;
         this.lastVideoTimestamp = -1;
+        this.smoothedLandmarks = null;   // landmark làm mượt theo thời gian
 
         // 2D State
         this.userImage = null;
@@ -629,10 +630,10 @@ class CVHairEngine {
         let angle = this.transform.rotation;
 
         if (this.faceMetrics && this.faceMetrics.foreheadX) {
-            // Neo đúng điểm tóc trán (landmark 10) và phủ rộng hơn khuôn mặt ~2 lần bề ngang
+            // Neo mốc tóc trán hơi DƯỚI landmark 10 (7% chiều cao mặt) -> tóc ôm sát trán
             posX = this.faceMetrics.foreheadX + this.transform.offsetX;
-            posY = this.faceMetrics.foreheadY + this.transform.offsetY;
-            scale = (this.faceMetrics.faceWidth * 2.5 / HAIR_BOX) * this.transform.scale;
+            posY = this.faceMetrics.foreheadY + this.faceMetrics.faceHeight * 0.07 + this.transform.offsetY;
+            scale = (this.faceMetrics.faceWidth * 2.9 / HAIR_BOX) * this.transform.scale;
             angle += this.faceMetrics.angle;
         }
 
@@ -911,7 +912,9 @@ class CVHairEngine {
                     child.material = this.three.hairMaterial;
                 }
             });
+            const cachedBox = new THREE.Box3().setFromObject(cachedPivot);
             hairGroup.add(cachedPivot);
+            this.three.hairLocalBox = cachedBox;
             if (loadVersion === this.three.modelLoadVersion) hairGroup.visible = true;
             return;
         }
@@ -950,6 +953,9 @@ class CVHairEngine {
             if (!this.three.loadedModels) this.three.loadedModels = {};
             this.three.loadedModels[modelKey] = modelPivot;
 
+            // Ghi nhớ hình hộp bao trong HỆ CỤC BỘ của pivot (độc lập vị trí group
+            // lúc đang tracking) để update3DPose neo đáy tóc vào đỉnh đầu chính xác
+            this.three.hairLocalBox = new THREE.Box3().setFromObject(modelPivot);
             if (loadVersion === this.three.modelLoadVersion && this.three.current3dStyle === styleKey) {
                 while (hairGroup.children.length > 0) hairGroup.remove(hairGroup.children[0]);
                 hairGroup.add(modelPivot.clone());
@@ -988,11 +994,28 @@ class CVHairEngine {
             if (this.three.lostTrackingFrames > 35) {
                 if (this.three.hairGroup) this.three.hairGroup.visible = false;
                 if (this.three.occlusionMesh) this.three.occlusionMesh.visible = false;
+                this.smoothedLandmarks = null;   // frame sau tracking lại từ đầu cho mượt
             }
             return;
         }
 
         this.three.lostTrackingFrames = 0;
+
+        // Làm mượt landmark theo thời gian (EMA 0.45): hết rung, chụp ảnh ổn định
+        if (!Array.isArray(this.smoothedLandmarks) || this.smoothedLandmarks.length !== landmarks.length) {
+            this.smoothedLandmarks = landmarks.map(p => ({ x: p.x, y: p.y, z: p.z || 0 }));
+        } else {
+            const alpha = 0.45;
+            for (let i = 0; i < landmarks.length; i++) {
+                const s = this.smoothedLandmarks[i];
+                const t = landmarks[i];
+                if (!t) continue;
+                s.x += (t.x - s.x) * alpha;
+                s.y += (t.y - s.y) * alpha;
+                s.z += ((t.z || 0) - s.z) * alpha;
+            }
+        }
+        landmarks = this.smoothedLandmarks;
         this.landmarks = landmarks;
         this.calculateFaceMetrics(width, height);
 
@@ -1038,11 +1061,18 @@ class CVHairEngine {
         const foreheadWz = (forehead.z || 0) * -6.0;
         const chinWy = (0.5 - chin.y) * vHeight;
 
-        // Tâm tóc = điểm trán kéo lên trên bằng 55% chiều cao mặt (khớp giải phẫu đầu người)
         const faceHeightW = Math.abs(foreheadWy - chinWy);
         const posX = foreheadWx;
-        const posY = foreheadWy + faceHeightW * 0.42 + (this.three.userOffsetY || 0);
         const posZ = foreheadWz - 0.25;
+
+        // Đỉnh đầu ~28% chiều cao mặt phía trên landmark trán.
+        // Đặt ĐÁY hình hộp tóc chạm đỉnh đầu + ăn vào da đầu 6% chiều cao mặt
+        // => tóc luôn DÍNH vào đầu đúng kích thước thật của model GLB, không lơ lửng.
+        const scaleNow = Math.max(0.75, Math.min(2.2, Math.hypot(rightTemple.x - leftTemple.x, rightTemple.y - leftTemple.y) * 3.5))
+            * (this.three.userScale || 1.0);
+        const bboxBottom = this.three.hairLocalBox ? this.three.hairLocalBox.min.y * scaleNow : 0;
+        const headTopY = foreheadWy + faceHeightW * 0.28;
+        const posY = headTopY - bboxBottom + faceHeightW * 0.14 + (this.three.userOffsetY || 0);
 
         this.three.targetPos.set(posX, posY, posZ);
         this.three.hairGroup.position.lerp(this.three.targetPos, 0.62);
@@ -1068,6 +1098,23 @@ class CVHairEngine {
             * (this.three.userScale || 1.0);
         this.three.hairGroup.scale.lerp(new THREE.Vector3(scaleFactor, scaleFactor, scaleFactor), 0.4);
 
+        // Debug hook: số liệu neo tóc để kiểm chứng trên thiết bị thật
+        if (typeof window !== 'undefined') {
+            window.__hanaHairDebug = {
+                foreheadWy: +foreheadWy.toFixed(2),
+                chinWy: +chinWy.toFixed(2),
+                faceHeightW: +faceHeightW.toFixed(2),
+                scaleNow: +scaleNow.toFixed(2),
+                bboxSet: !!this.three.hairLocalBox,
+                bboxMinY: this.three.hairLocalBox ? +this.three.hairLocalBox.min.y.toFixed(2) : null,
+                boxMaxY: this.three.hairLocalBox ? +this.three.hairLocalBox.max.y.toFixed(2) : null,
+                posY: +posY.toFixed(2),
+                groupPos: +this.three.hairGroup.position.y.toFixed(2),
+                meshBottomWorld: +(posY + bboxBottom).toFixed(2),
+                children: this.three.hairGroup.children.length
+            };
+        }
+
         if (this.three.meshCtx && this.three.meshCanvas) {
             const ctx = this.three.meshCtx;
             const cWidth = this.three.meshCanvas.width;
@@ -1088,9 +1135,9 @@ class CVHairEngine {
 
         ctx.save();
         ctx.globalAlpha = this.transform.opacity;
-        ctx.translate(vW - this.faceMetrics.foreheadX, this.faceMetrics.foreheadY);
+        ctx.translate(vW - this.faceMetrics.foreheadX, this.faceMetrics.foreheadY + this.faceMetrics.faceHeight * 0.07);
         ctx.rotate((-this.faceMetrics.angle * Math.PI) / 180);
-        const scale = (this.faceMetrics.faceWidth * 2.5 / HAIR_BOX) * this.transform.scale;
+        const scale = (this.faceMetrics.faceWidth * 2.9 / HAIR_BOX) * this.transform.scale;
         ctx.scale(scale, scale);
         ctx.drawImage(this.hairImage, -HAIR_BOX / 2, -HAIR_BOX * HAIRLINE_RATIO, HAIR_BOX, HAIR_BOX);
         ctx.restore();

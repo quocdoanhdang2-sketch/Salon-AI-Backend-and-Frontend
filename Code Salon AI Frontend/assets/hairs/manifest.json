@@ -1,82 +1,66 @@
 {
   "layer_nu": {
     "label": "Layer Dài Cúp Ngọn Hàn Quốc",
-    "anchorY": 0.347,
+    "anchorY": 0.4,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "korean long layered dark brown haircut, feathered layer tips, thin see-through curtain bangs",
-    "seed": 1900294525,
-    "generatedAt": "2026-09-07 06:12:37"
+    "seed": 1637811015,
+    "generatedAt": "2026-09-07 06:50:11"
   },
   "wave_nu": {
     "label": "Sóng Lơi Bồng Bềnh Hàn Quốc",
-    "anchorY": 0.338,
+    "anchorY": 0.38,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "long chestnut brown loose waves, bouncy soft curls flowing past shoulders",
-    "seed": 1451397082,
-    "generatedAt": "2026-09-07 06:12:44"
+    "seed": 1292456776,
+    "generatedAt": "2026-09-07 06:50:40"
   },
   "bob_nu": {
     "label": "Bob Ngắn Cá Tính Balayage",
-    "anchorY": 0.26,
+    "anchorY": 0.358,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "short dark bob haircut with subtle inward curled ends and wispy bangs, caramel balayage highlights",
-    "seed": 232975300,
-    "generatedAt": "2026-09-07 06:12:51"
+    "seed": 56413520,
+    "generatedAt": "2026-09-07 06:51:09"
   },
   "wolf_cut": {
     "label": "Wolf Cut / Shag Thời Thượng",
-    "anchorY": 0.312,
+    "anchorY": 0.365,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "dark brown wolf cut shag, choppy layered texture with wispy fringe, messy volume",
-    "seed": 509537608,
-    "generatedAt": "2026-09-07 06:12:58"
+    "seed": 1096000960,
+    "generatedAt": "2026-09-07 06:51:38"
   },
   "straight_silk": {
     "label": "Thẳng Suôn Keratin Bóng Mượt",
-    "anchorY": 0.34,
+    "anchorY": 0.392,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "long glossy jet black silky straight hair, middle part, mirror shine",
-    "seed": 65593050,
-    "generatedAt": "2026-09-07 06:13:05"
+    "seed": 108169576,
+    "generatedAt": "2026-09-07 06:52:07"
   },
   "pixie_nu": {
     "label": "Pixie Cut Hiện Đại Nữ",
-    "anchorY": 0.263,
+    "anchorY": 0.327,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "ash brown pixie cut, short textured layers with side swept fringe",
-    "seed": 1252793999,
-    "generatedAt": "2026-09-07 06:13:12"
+    "seed": 1207448690,
+    "generatedAt": "2026-09-07 06:52:36"
   },
   "layer_nam": {
     "label": "Layer Nam Textured Crop",
-    "anchorY": 0.253,
+    "anchorY": 0.293,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "korean men black brown textured crop, tousled short layers with natural fringe",
-    "seed": 689564657,
-    "generatedAt": "2026-09-07 06:13:20"
+    "seed": 1849824119,
+    "generatedAt": "2026-09-07 06:53:05"
   },
   "sidepart_nam": {
     "label": "Side Part 7/3 Lịch Lãm Nam",
-    "anchorY": 0.268,
+    "anchorY": 0.31,
     "source": "sd15-local-silhouette-i2i",
     "prompt": "men dark brown classic side part, slick voluminous top combed to one side, clean part line",
-    "seed": 1287986379,
-    "generatedAt": "2026-09-07 06:13:27"
-  },
-  "ai_xoan-mat-ong-ai": {
-    "label": "Xoan Mat Ong AI",
-    "anchorY": 0.432,
-    "source": "sd15-local-prompt-restyle:wave_nu",
-    "prompt": "t�c d�i xoan s�ng loi m�u n�u m?t ong",
-    "seed": 1788736993,
-    "generatedAt": "2026-09-07 06:23:36"
-  },
-  "ai_toc-ngang-vai-uon-cup-uoi-nhuom-nau-soco": {
-    "label": "tóc ngang vai uốn cụp đuôi nhuộm nâu socola",
-    "anchorY": 0.375,
-    "source": "sd15-local-prompt-restyle:bob_nu",
-    "prompt": "tóc ngang vai uốn cụp đuôi nhuộm nâu socola",
-    "seed": 1788737324,
-    "generatedAt": "2026-09-07 06:28:52"
+    "seed": 1320580976,
+    "generatedAt": "2026-09-07 06:53:43"
   }
 }
